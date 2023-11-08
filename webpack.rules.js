@@ -16,6 +16,29 @@ module.exports = [
       },
     },
   },
+  {
+    test: /\.jsx?$/,
+    use: {
+      loader: 'babel-loader',
+      options: {
+        exclude: /node_modules/,
+        presets: ['@babel/preset-react']
+      }
+    }
+  },
+  {
+    test: /\.(png|jpe?g|gif)$/i,
+    use: [
+      {
+        // 直接配置 url-loader 就好，超過上限的資源會自動 fallback 給 file-loader
+        loader: 'url-loader',
+        options: {
+          name: 'img/[name].[ext]',
+          limit: 10000,
+        },
+      },
+    ],
+  },
   // Put your webpack loader rules in this array.  This is where you would put
   // your ts-loader configuration for instance:
   /**

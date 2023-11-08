@@ -13,12 +13,8 @@ const createWindow = () => {
     height: 600,
     // backgroundColor: '#FF0000',
     webPreferences: {
-      // preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      preload: {
-        // js: "./src/renderer/Konva/MainKonva/MainKonva.js",
-        js: "./src/renderer.js"
-      }
-    },
+      preload: path.join(__dirname, './preload.js')
+    }
   });
 
   // and load the index.html of the app.
