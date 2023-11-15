@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, Component } from 'react';
+import React, { useRef, useEffect, Component, useState } from 'react';
 import ToggleButtonOnMainKonva from './components/MUI/ToggleButtonOnMainKonva/ToggleButtonOnMainKonva.jsx';
 import Toolbar from './components/Toolbar/Toolbar.jsx';
 import MainKonva from './components/MainKonva/MainKonva';
@@ -38,18 +38,33 @@ import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 // }
 
 export default function App() {
+  const [toolSelect, setToolSelect] = useState('');
+
   useEffect(() => {
-      const whiteBoard = new WhiteBoard();
-      whiteBoard.initStage( window.innerWidth,  window.innerHeight, 'white'); // 填入你的容器 ID
-      whiteBoard.initMainLayer();
-      whiteBoard.initBackLayer( window.innerWidth,  window.innerHeight);
+    const whiteBoard = new WhiteBoard();
+    whiteBoard.initStage( window.innerWidth,  window.innerHeight, 'white'); // 填入你的容器 ID
+    whiteBoard.initMainLayer();
+    whiteBoard.initBackLayer( window.innerWidth,  window.innerHeight);
   }, []);
 
+
+  // 回调函数，用于从子组件接收值
+  const handleToolSelect = (button) => {
+    // 处理子组件传递过来的值
+    setToolSelect(button);
+    console.log(button);
+    // console.log(toolSelect);
+  };
+
   return (
-    <div className="large-container">
-      <Toolbar />
+    <div>
+      <Toolbar onToolSelect={handleToolSelect}/>
       <ToggleButtonOnMainKonva/>
       <div id="white"></div>
+      {/* <div className="large-container">
+        <ToggleButtonOnMainKonva/>
+        <div id="white"></div>
+      </div> */}
     </div>
   );
 }

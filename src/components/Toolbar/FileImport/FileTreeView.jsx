@@ -65,17 +65,26 @@
 import React, { useState, useEffect } from 'react';
 import { TreeItem, TreeView } from '@mui/x-tree-view';
 import FolderIcon from '@mui/icons-material/Folder';
+import { makeStyles } from '@mui/styles';
 import DescriptionIcon from '@mui/icons-material/Description';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { styled } from '@mui/material/styles';
 
 const StyledTreeView = styled(TreeView)({
-  height: 240,
+  height: 400,
   flexGrow: 1,
   maxWidth: 400,
 });
 
+const useStyles = makeStyles({
+  treeview: {
+    width: '85%',
+    marginLeft: '72px',
+  },
+});
+
 export default function FileTreeView() {
+  const classes = useStyles();
   const [selected, setSelected] = useState([]);
   const [fileStructure, setFileStructure] = useState([]);
 
@@ -147,7 +156,7 @@ export default function FileTreeView() {
   };
 
   return (
-    <div>
+    <div className={classes.treeview}>
       <StyledTreeView multiSelect selected={selected} onNodeSelect={handleSelect}>
         {fileStructure.map((node) => renderTree(node))}
         {/* Render tree structure */}

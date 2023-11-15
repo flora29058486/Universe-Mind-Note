@@ -42,6 +42,7 @@
     "@material-ui/lab": "^4.0.0-alpha.61",
     "@mui/icons-material": "^5.14.16",
     "@mui/material": "^5.14.17",
+    "@mui/styles": "^5.14.18",
     "@mui/x-tree-view": "^6.17.0",
     "electron-squirrel-startup": "^1.0.0",
     "file-loader": "^6.2.0",

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { styled, useTheme, createTheme } from '@mui/material/styles';
+import { styled, useTheme, createTheme, ThemeProvider } from '@mui/material/styles';
+import { makeStyles } from '@mui/styles';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -29,9 +30,21 @@ const componentTheme = createTheme({
   },
 });
 
+const useStyles = makeStyles({
+  drawer: {
+    flexShrink: 0,
+    width: "15%",
+    // "& .MuiDrawer-paper": {
+    //   width: "15%",
+    //   boxSizing: "border-box",
+    //   overflowX: "hidden",
+    //   marginTop: "64px"
+    // }
+  }
+});
 
-
-function Toolbar() {
+function Toolbar({onToolSelect}) {
+  const classes = useStyles();
   // const theme = useTheme(componentTheme);
   // const [isToolBarOpen, setToolBarOpen] = useState(false);
   // const [isTreeViewOpen, setTreeViewOpen] = useState(false);
@@ -43,19 +56,22 @@ function Toolbar() {
 
   const handleButtonClick = (buttonId) => {
     if (buttonId === selectedButton) {
+      onToolSelect('');
       setSelectedButton('');
     } else {
+      onToolSelect(buttonId);
       setSelectedButton(buttonId);
     }
   };
 
   useEffect(() => {
-    console.log(selectedButton);
+    // console.log(selectedButton);
   }, [selectedButton]);
 
   return (
-    <div>
-      <Drawer open={true} variant="persistent">
+    // <ThemeProvider theme={componentTheme}>
+    <>
+      <Drawer open={true} variant="permanent" anchor="left" className={classes.drawer}>
         <List>
           <ListItemButton
             onClick={() => handleButtonClick('Explorer')}
@@ -127,14 +143,14 @@ function Toolbar() {
             </Tooltip>
           </ListItemButton>
         </List>
+        {/* FileTreeView */}
       </Drawer>
       {selectedButton === 'Explorer' && (
-        <div style={{ marginLeft: '72px' }}>
-          {/* 右侧渲染 CustomTreeView */}
-          <FileTreeView selectedButton={selectedButton} />
-        </div>
+        <FileTreeView selectedButton={selectedButton} />
       )}
-    </div>
+    </>
+    
+    // </ThemeProvider>
   );
 }
 
