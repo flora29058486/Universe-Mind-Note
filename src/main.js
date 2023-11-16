@@ -27,7 +27,7 @@ async function openFolderDialog() {
 function traverseFolder(rootPath) {
   const rootName = path.basename(rootPath);
   const rootNode = {
-    id: rootPath, // 可以將資料夾絕對路徑作為 ID
+    id: rootPath, // 資料夾絕對路徑作為 ID
     label: rootName, // 資料夾名稱作為標籤
     type: 'folder', // 標記這是一個資料夾節點
     children: [],
@@ -35,29 +35,40 @@ function traverseFolder(rootPath) {
 
   const files = fs.readdirSync(rootPath);
 
+  const fileNodes = [];
+  const folderNodes = [];
+
   files.forEach(file => {
     const filePath = path.join(rootPath, file);
     const stats = fs.statSync(filePath);
 
     if (stats.isDirectory()) {
       const childNode = traverseFolder(filePath); // 遞迴處理資料夾
-      rootNode.children.push(childNode);
+      folderNodes.push(childNode);
     } else if (stats.isFile()) {
-      // 處理檔案節點
       const fileName = path.basename(filePath);
       const fileExtension = path.extname(filePath);
-      const fileId = filePath; // 可以將檔案絕對路徑作為 ID
+      const fileId = filePath; // 檔案絕對路徑作為 ID
 
       const fileNode = {
         id: fileId,
         label: fileName,
         type: 'file', // 標記這是一個檔案節點
         extension: fileExtension, // 檔案副檔名
+        lastModified: stats.mtime.getTime(), // 上次修改時間
       };
 
-      rootNode.children.push(fileNode);
+      fileNodes.push(fileNode);
     }
   });
+
+  // Sort folders by last modified time
+  folderNodes.sort((a, b) => b.lastModified - a.lastModified);
+
+  // Sort files by last modified time
+  fileNodes.sort((a, b) => b.lastModified - a.lastModified);
+
+  rootNode.children = [...folderNodes, ...fileNodes];
 
   return rootNode;
 }
