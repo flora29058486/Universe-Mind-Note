@@ -1,67 +1,3 @@
-// import React, { useEffect, useState } from 'react';
-// import TreeView from '@mui/lab/TreeView';
-// import TreeItem from '@mui/lab/TreeItem';
-// import FolderIcon from '@mui/icons-material/Folder';
-// import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-// import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-// import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-
-// function CustomTreeView({ selectedButton }) {
-//   const [fileStructure, setFileStructure] = useState([]);
-
-//   // 模拟文件结构的数据
-//   useEffect(() => {
-//     // 您可以根据实际需求获取文件结构的数据
-//     const mockFileStructure = [
-//       {
-//         name: 'Folder 1',
-//         type: 'folder',
-//         children: [
-//           { name: 'File 1-1.txt', type: 'file' },
-//           { name: 'File 1-2.txt', type: 'file' },
-//         ],
-//       },
-//       {
-//         name: 'Folder 2',
-//         type: 'folder',
-//         children: [
-//           { name: 'File 2-1.txt', type: 'file' },
-//           { name: 'File 2-2.txt', type: 'file' },
-//         ],
-//       },
-//       { name: 'File 3.txt', type: 'file' },
-//     ];
-
-//     setFileStructure(mockFileStructure);
-//   }, [selectedButton]);
-
-//   const renderTree = (nodes) => (
-//     <TreeItem key={nodes.name} nodeId={nodes.name} label={nodes.name} icon={getIcon(nodes)}>
-//       {Array.isArray(nodes.children) ? nodes.children.map((node) => renderTree(node)) : null}
-//     </TreeItem>
-//   );
-
-//   const getIcon = (node) => {
-//     if (node.type === 'folder') {
-//       return <FolderIcon />;
-//     } else if (node.type === 'file') {
-//       return <InsertDriveFileIcon />;
-//     }
-//     return null;
-//   };
-
-//   return (
-//     <TreeView
-//       defaultCollapseIcon={<ExpandMoreIcon />}
-//       defaultExpandIcon={<ChevronRightIcon />}
-//     >
-//       {fileStructure.map((node) => renderTree(node))}
-//     </TreeView>
-//   );
-// }
-
-// export default CustomTreeView;
-
 import React, { useState, useEffect } from 'react';
 import { TreeItem, TreeView } from '@mui/x-tree-view';
 import FolderIcon from '@mui/icons-material/Folder';
@@ -71,23 +7,41 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import { styled } from '@mui/material/styles';
 
-const StyledTreeView = styled(TreeView)({
-  height: 400,
-  flexGrow: 1,
-  maxWidth: 400,
-});
-
 const useStyles = makeStyles({
   treeview: {
-    width: '85%',
-    marginLeft: '72px',
+    marginLeft: '-20px',
   },
+  fileListContainer: {
+    height: '80vh', /* 設置最大高度 */
+    overflowY: 'auto', /* 啟用垂直滾動條 */
+    overflowX: 'hidden', /* 啟用水平滾動條 */
+    "&::-webkit-scrollbar": {
+      width: '10px', /* 滾動條寬度 */
+    },
+    scrollbarWidth: 'thin', /* 滾動條寬度（Firefox支援） */
+    "&::-webkit-scrollbar-thumb": {
+      backgroundColor: '#888', /* 滾動條顏色 */
+      borderRadius: '6px', /* 圓角 */
+      transition: 'background-color 1.2s ease', /* 顏色漸變動畫 */
+    },
+    "&:hover::-webkit-scrollbar-thumb": {
+      backgroundColor: '#555', /* 滑鼠懸停時滾動條顏色改變 */
+    },
+    "&::-webkit-scrollbar-track": {
+      backgroundColor: 'transparent', /* 滾動條背景顏色 */
+    },
+  },
+})
+
+const StyledTreeView = styled(TreeView)({
+  height: '80vh', // 佔滿視窗高度
+  flexGrow: 1,
 });
 
 export default function FileTreeView() {
   const classes = useStyles();
   const [selected, setSelected] = useState([]);
-  const [folderPath, setFolderPath] = useState('');
+  const [fileStructure, setFileStructure] = useState();
   const [folderPaths, setFolderPaths] = useState([]);
 
   // Load file structure on mount
@@ -141,10 +95,12 @@ export default function FileTreeView() {
 
   return (
     <div className={classes.treeview}>
-      <StyledTreeView multiSelect selected={selected} onNodeSelect={handleSelect}>
-      {fileStructure && renderTree(fileStructure)}
-        {/* Render tree structure */}
-      </StyledTreeView>
+      <div className={classes.fileListContainer}>
+        <StyledTreeView multiSelect selected={selected} onNodeSelect={handleSelect}>
+        {fileStructure && renderTree(fileStructure)}
+          {/* Render tree structure */}
+        </StyledTreeView>
+      </div>
       <RefreshIcon onClick={handleRefresh} />
       <CreateNewFolderIcon onClick={handleFolderImport}/>
       {/* Display selected files */}
