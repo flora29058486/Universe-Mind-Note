@@ -68,6 +68,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import { makeStyles } from '@mui/styles';
 import DescriptionIcon from '@mui/icons-material/Description';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import { styled } from '@mui/material/styles';
 
 const StyledTreeView = styled(TreeView)({
@@ -86,11 +87,12 @@ const useStyles = makeStyles({
 export default function FileTreeView() {
   const classes = useStyles();
   const [selected, setSelected] = useState([]);
-  const [fileStructure, setFileStructure] = useState([]);
+  const [folderPath, setFolderPath] = useState('');
+  const [folderPaths, setFolderPaths] = useState([]);
 
   // Load file structure on mount
   useEffect(() => {
-    loadFileStructure();
+
   }, []);
 
   // Handle node select
@@ -99,50 +101,32 @@ export default function FileTreeView() {
   };
 
   // Handle refresh click
-  const handleRefresh = () => {
-    loadFileStructure();
+  const handleRefresh = async () => {
+    // await handleFolderImport();
   };
 
-  // Load file structure
-  const loadFileStructure = () => {
-    // Call API or filesystem to load real file structure
-    // 您可以根据实际需求获取文件结构的数据
-    const mockFileStructure = [
-      {
-        name: 'Folder 1',
-        type: 'folder',
-        children: [
-          { name: 'File 1-1.txt', type: 'file' },
-          { name: 'File 1-2.txt', type: 'file' },
-        ],
-      },
-      {
-        name: 'Folder 2',
-        type: 'folder',
-        children: [
-          { name: 'File 2-1.txt', type: 'file' },
-          { name: 'File 2-2.txt', type: 'file' },
-        ],
-      },
-      { name: 'File 3.txt', type: 'file' },
-    ];
+  // Handle create new folder click
+  const handleFolderImport = async () => {
+    try {
+      const files = await window.electronAPI.loadFolder();
+      // console.log(files);
+      setFileStructure(files);
 
-    const data = [
-      {
-        name: 'Folder 1',
-        children: [/* files and folders */],
-      },
-      {
-        name: 'Folder 2',
-        children: [/* files and folders */],
-      },
-    ];
+      // save the folder path
+      if (files && files.length > 0) {
+        const newFolderPath = files[0].absolutePath; // Assuming the folder path is in the first item of the files array
 
-    setFileStructure(mockFileStructure);
+        // Update folder paths array
+        setFolderPaths(prevPaths => [...prevPaths, newFolderPath]);
+      }
+
+    } catch (error) {
+      console.error('Error reading folder:', error);
+    }
   };
-
+  
   const renderTree = (nodes) => (
-    <TreeItem key={nodes.name} nodeId={nodes.name} label={nodes.name} icon={getIcon(nodes)}>
+    <TreeItem key={nodes.id} nodeId={nodes.id} label={nodes.label} icon={getIcon(nodes)}>
       {Array.isArray(nodes.children) ? nodes.children.map((node) => renderTree(node)) : null}
     </TreeItem>
   );
@@ -158,10 +142,11 @@ export default function FileTreeView() {
   return (
     <div className={classes.treeview}>
       <StyledTreeView multiSelect selected={selected} onNodeSelect={handleSelect}>
-        {fileStructure.map((node) => renderTree(node))}
+      {fileStructure && renderTree(fileStructure)}
         {/* Render tree structure */}
       </StyledTreeView>
       <RefreshIcon onClick={handleRefresh} />
+      <CreateNewFolderIcon onClick={handleFolderImport}/>
       {/* Display selected files */}
     </div>
   );
