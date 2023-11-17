@@ -57,7 +57,6 @@ export default function FileTreeView() {
   // Handle node select
   const handleNodeSelect = (event, nodeId) => {
     setSelectedNode(nodeId);
-    // console.log(nodeId);
   };
 
   const handleMouseDownOnSelectNode = (event, node) => {
@@ -68,19 +67,16 @@ export default function FileTreeView() {
     const filesToDrag = isNodeSelected ? selectedNode : [node.id];
     console.log(filesToDrag);
     setDragFiles(filesToDrag);
+    event.dataTransfer.setData("dragFiles", filesToDrag);
     // <FileDragToKonva files={filesToDrag} />;
-};
+  };
 
-  // const handleDragStart = (event, nodeIds) => {
-  //   // const dragNodeId = nodeIds.find(id => selectedNode.includes(id));
-  //   console.log(nodeIds);
-  //   // if (clickedNodeId) {
-  //   //   // 確認點擊的是已選取的檔案
-  //   //   // 這裡可以觸發 DragChip，傳遞相應的檔案資料到 DragChip 中
-  //   //   // 例如: <DragChip data={getFileData(clickedNodeId)} />
-  //   //   <FileDragToKonva files={selectedNode} />
-  //   // }
-  // };
+  const handleDrop = (event) => {
+    event.stopPropagation();  
+    // event.preventDefault();
+    console.log(dragFiles);
+    // setDragFiles(files);
+  };
 
   // Handle refresh click
   const handleRefresh = async () => {
@@ -118,9 +114,7 @@ export default function FileTreeView() {
       onDrag={() => {
         // console.log("onDrag");
       }}
-      onDragEnd={() => {
-        console.log("onDragEnd");
-      }}
+      onDragEnd={(event) => handleDrop(event)}
       // icon={getIcon(nodes)}
     >
       {Array.isArray(nodes.children) ? nodes.children.map((node) => renderTree(node)) : null}

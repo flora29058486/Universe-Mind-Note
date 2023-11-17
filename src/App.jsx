@@ -56,11 +56,23 @@ export default function App() {
     // console.log(toolSelect);
   };
 
+  const handleDropOutside = (e) => {
+    e.preventDefault();
+    const files = e.dataTransfer.getData('dragFiles');
+    console.log(files);
+  };
+
   return (
     <div>
       <Toolbar onToolSelect={handleToolSelect}/>
       <ToggleButtonOnMainKonva/>
-      <div id="white"></div>
+      <div 
+        id="konva-container"
+        onDrop={handleDropOutside}
+        onDragOver={(e) => e.preventDefault()}
+      >
+        <div id="white"></div>
+      </div>
       {/* <div className="large-container">
         <ToggleButtonOnMainKonva/>
         <div id="white"></div>

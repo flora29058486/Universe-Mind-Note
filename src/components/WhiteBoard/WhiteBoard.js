@@ -25,6 +25,7 @@ export class WhiteBoard {
 
         this.stage.on('dragend', (e) => {
             console.log('dragend');
+            e.cancelBubble = true;
             const position = e.currentTarget.position();
             
             this.backLayerRender.updateGrid(this.width, this.height, position.x, position.y);
@@ -48,14 +49,14 @@ export class WhiteBoard {
 
     drawSimpleShapes() {
 
-    const circle = new Konva.Circle({
-        x: this.stage.width() / 2,
-        y: this.stage.height() / 2,
-        radius: 70,
-        fill: '#F9E6E0',
-        stroke: '#1486F5',
-        strokeWidth: 4,
-    });
+        const circle = new Konva.Circle({
+            x: this.stage.width() / 2,
+            y: this.stage.height() / 2,
+            radius: 70,
+            fill: '#F9E6E0',
+            stroke: '#1486F5',
+            strokeWidth: 4,
+        });
 
         const rect3 = new Konva.Rect({
             x: 550,
