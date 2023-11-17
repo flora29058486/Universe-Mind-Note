@@ -1,15 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TreeItem, TreeView } from '@mui/x-tree-view';
 import FolderIcon from '@mui/icons-material/Folder';
 import { makeStyles } from '@mui/styles';
 import DescriptionIcon from '@mui/icons-material/Description';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { styled } from '@mui/material/styles';
+import { useDrag } from 'react-dnd';
+import { NativeTypes } from 'react-dnd-html5-backend';
+import FileDragToKonva from './FileDragToKonva.jsx';
+import IconButton from '@mui/material/IconButton';
+import Chip from '@mui/material/Chip';
 
 const useStyles = makeStyles({
   treeview: {
     marginLeft: '-20px',
+    height: '80vh', /* 設置最大高度 */
+    flexGrow: 1,
   },
   fileListContainer: {
     height: '80vh', /* 設置最大高度 */
@@ -33,26 +42,45 @@ const useStyles = makeStyles({
   },
 })
 
-const StyledTreeView = styled(TreeView)({
-  height: '80vh', // 佔滿視窗高度
-  flexGrow: 1,
-});
-
 export default function FileTreeView() {
   const classes = useStyles();
-  const [selected, setSelected] = useState([]);
+  const [selectedNode, setSelectedNode] = useState([]);
   const [fileStructure, setFileStructure] = useState();
   const [folderPaths, setFolderPaths] = useState([]);
+  const [dragEnabled, setDragEnabled] = useState(true);
+  const [dragFiles, setDragFiles] = useState();
 
-  // Load file structure on mount
   useEffect(() => {
 
-  }, []);
+  }, [dragFiles]);
 
   // Handle node select
-  const handleSelect = (event, nodeIds) => {
-    setSelected(nodeIds);
+  const handleNodeSelect = (event, nodeId) => {
+    setSelectedNode(nodeId);
+    // console.log(nodeId);
   };
+
+  const handleMouseDownOnSelectNode = (event, node) => {
+    // prevent default behavior (render to top folder)
+    event.stopPropagation();
+
+    const isNodeSelected = selectedNode.includes(node.id);
+    const filesToDrag = isNodeSelected ? selectedNode : [node.id];
+    console.log(filesToDrag);
+    setDragFiles(filesToDrag);
+    // <FileDragToKonva files={filesToDrag} />;
+};
+
+  // const handleDragStart = (event, nodeIds) => {
+  //   // const dragNodeId = nodeIds.find(id => selectedNode.includes(id));
+  //   console.log(nodeIds);
+  //   // if (clickedNodeId) {
+  //   //   // 確認點擊的是已選取的檔案
+  //   //   // 這裡可以觸發 DragChip，傳遞相應的檔案資料到 DragChip 中
+  //   //   // 例如: <DragChip data={getFileData(clickedNodeId)} />
+  //   //   <FileDragToKonva files={selectedNode} />
+  //   // }
+  // };
 
   // Handle refresh click
   const handleRefresh = async () => {
@@ -80,7 +108,21 @@ export default function FileTreeView() {
   };
   
   const renderTree = (nodes) => (
-    <TreeItem key={nodes.id} nodeId={nodes.id} label={nodes.label} icon={getIcon(nodes)}>
+    <TreeItem
+      key={nodes.id} 
+      nodeId={nodes.id} 
+      label={nodes.label}
+      onFocusCapture={e => e.stopPropagation()}
+      draggable
+      onDragStart={(event) => handleMouseDownOnSelectNode(event, nodes)}
+      onDrag={() => {
+        // console.log("onDrag");
+      }}
+      onDragEnd={() => {
+        console.log("onDragEnd");
+      }}
+      // icon={getIcon(nodes)}
+    >
       {Array.isArray(nodes.children) ? nodes.children.map((node) => renderTree(node)) : null}
     </TreeItem>
   );
@@ -95,14 +137,23 @@ export default function FileTreeView() {
 
   return (
     <div className={classes.treeview}>
-      <div className={classes.fileListContainer}>
-        <StyledTreeView multiSelect selected={selected} onNodeSelect={handleSelect}>
-        {fileStructure && renderTree(fileStructure)}
-          {/* Render tree structure */}
-        </StyledTreeView>
-      </div>
+      {dragFiles && <FileDragToKonva files={dragFiles} />}
       <RefreshIcon onClick={handleRefresh} />
       <CreateNewFolderIcon onClick={handleFolderImport}/>
+      <div className={classes.fileListContainer}>
+        <TreeView 
+          multiSelect 
+          defaultCollapseIcon={<ExpandMoreIcon />}
+          defaultExpandIcon={<ChevronRightIcon />}
+          aria-label="multi-select"
+          // defaultParentIcon={<FolderIcon />}
+          selected={selectedNode} 
+          onNodeSelect={handleNodeSelect}
+        >
+          {fileStructure && renderTree(fileStructure)}
+          {/* Render tree structure */}
+        </TreeView>
+      </div>
       {/* Display selected files */}
     </div>
   );
