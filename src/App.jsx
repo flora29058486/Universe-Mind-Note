@@ -4,6 +4,7 @@ import Toolbar from './components/Toolbar/Toolbar.jsx';
 import MainKonva from './components/MainKonva/MainKonva';
 import './App.css';
 import KnovaBgImg from './components/knovaBg.jsx';
+// import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 
 // export default function App() {
@@ -40,12 +41,12 @@ import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 export default function App() {
   const [toolSelect, setToolSelect] = useState('');
 
-  useEffect(() => {
-    const whiteBoard = new WhiteBoard();
-    whiteBoard.initStage( window.innerWidth,  window.innerHeight, 'white'); // 填入你的容器 ID
-    whiteBoard.initMainLayer();
-    whiteBoard.initBackLayer( window.innerWidth,  window.innerHeight);
-  }, []);
+  // useEffect(() => {
+  //   const whiteBoard = new WhiteBoard();
+  //   whiteBoard.initStage(window.innerWidth,  window.innerHeight, 'white'); // 填入你的容器 ID
+  //   whiteBoard.initMainLayer();
+  //   whiteBoard.initBackLayer(window.innerWidth,  window.innerHeight);
+  // }, []);
 
 
   // 回调函数，用于从子组件接收值
@@ -71,12 +72,9 @@ export default function App() {
         onDrop={handleDropOutside}
         onDragOver={(e) => e.preventDefault()}
       >
-        <div id="white"></div>
+        <WhiteBoard />
+        {/* <div id="white"></div> */}
       </div>
-      {/* <div className="large-container">
-        <ToggleButtonOnMainKonva/>
-        <div id="white"></div>
-      </div> */}
     </div>
   );
 }
