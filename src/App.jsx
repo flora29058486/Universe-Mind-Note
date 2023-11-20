@@ -7,39 +7,14 @@ import KnovaBgImg from './components/knovaBg.jsx';
 // import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 
-// export default function App() {
-//   const containerRef = useRef(null);
-
-//   // useEffect(() => {
-//   //   MainKonva();
-//   //   // 在 containerRef.current 中引用 DOM 元素
-//   //   const containerElement = containerRef.current;
-//   // }, []);
-
-//   componentDidMount() {
-//     const whiteBoard = new WhiteBoard();
-//     whiteBoard.initStage(800, 600, 'container'); // 填入你的容器 ID
-//     whiteBoard.initMainLayer();
-//     whiteBoard.initBackLayer(800, 600);
-//   }
-
-//   return (
-
-//     <div>
-//       {/* <div>
-//         <KnovaBgImg />
-//       </div> */}
-//       {/* <div className="large-container">
-//         <ToggleButtonOnMainKonva />
-//         <div ref={containerRef} id="container"></div>
-//       </div> */}
-//       <MainKonva />
-//     </div>
-//   );
-// }
-
 export default function App() {
   const [toolSelect, setToolSelect] = useState('');
+  const [fileDrag, setFileDrag] = useState([]);
+
+  const handlePositionInfo = (positionInfo) => {
+    // 在這裡處理從WhiteBoard的滑鼠位置
+    console.log("Position info from child:", positionInfo);
+  };
 
   // useEffect(() => {
   //   const whiteBoard = new WhiteBoard();
@@ -47,6 +22,10 @@ export default function App() {
   //   whiteBoard.initMainLayer();
   //   whiteBoard.initBackLayer(window.innerWidth,  window.innerHeight);
   // }, []);
+
+  useEffect(() => {
+
+  }, [fileDrag]);
 
 
   // 回调函数，用于从子组件接收值
@@ -58,9 +37,13 @@ export default function App() {
   };
 
   const handleDropOutside = (e) => {
+    // 讓檔案可以放在裡面
     e.preventDefault();
-    const files = e.dataTransfer.getData('dragFiles');
-    console.log(files);
+    const filesJSON = e.dataTransfer.getData('dragFiles');
+    console.log(filesJSON);
+    // if (!filesJSON) return;
+    const files = JSON.parse(filesJSON);
+    setFileDrag(files);
   };
 
   return (
@@ -72,7 +55,10 @@ export default function App() {
         onDrop={handleDropOutside}
         onDragOver={(e) => e.preventDefault()}
       >
-        <WhiteBoard />
+        <WhiteBoard 
+          fileDrop={fileDrag}
+          // onPositionInfo={handlePositionInfo}
+        />
         {/* <div id="white"></div> */}
       </div>
     </div>

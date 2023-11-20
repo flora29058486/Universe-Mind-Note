@@ -67,7 +67,10 @@ export default function FileTreeView() {
     const filesToDrag = isNodeSelected ? selectedNode : [node.id];
     console.log(filesToDrag);
     setDragFiles(filesToDrag);
-    event.dataTransfer.setData("dragFiles", filesToDrag);
+
+    const filesJSON = JSON.stringify(filesToDrag);
+    event.dataTransfer.setData("dragFiles", filesJSON);
+
     // <FileDragToKonva files={filesToDrag} />;
   };
 
@@ -114,7 +117,7 @@ export default function FileTreeView() {
       onDrag={() => {
         // console.log("onDrag");
       }}
-      onDragEnd={(event) => handleDrop(event)}
+      // onDragEnd={(event) => handleDrop(event)}
       // icon={getIcon(nodes)}
     >
       {Array.isArray(nodes.children) ? nodes.children.map((node) => renderTree(node)) : null}

@@ -1,93 +1,8 @@
-// import Konva from "konva";
-// import { BackLayerRender } from "./BackLayerRender";
-
-// export class WhiteBoard {
-//     stage;
-//     mainLayer;
-//     backLayer;
-
-//     backLayerRender;
-
-//     width = 0;
-//     height = 0;
-
-//     initStage(width, height, containerId) {
-//         this.width = width;
-//         this.height = height;
-
-//         this.stage = new Konva.Stage({
-//             width: width,
-//             height: height,
-//             container: containerId
-//         });
-
-//         this.stage.draggable(true);
-
-//         this.stage.on('dragend', (e) => {
-//             console.log('dragend');
-//             e.cancelBubble = true;
-//             const position = e.currentTarget.position();
-            
-//             this.backLayerRender.updateGrid(this.width, this.height, position.x, position.y);
-//         });
-//     }
-
-//     initMainLayer() {
-//         this.mainLayer = new Konva.Layer();
-//         this.stage.add(this.mainLayer);
-//         this.mainLayer.draw();
-//         this.drawSimpleShapes();
-//     }
-
-//     initBackLayer(width, height) {
-//         this.backLayer = new Konva.Layer();
-//         this.backLayer.listening(false);
-//         this.backLayerRender = new BackLayerRender(this.backLayer);
-//         this.backLayerRender.renderGrid(width, height);
-//         this.stage.add(this.backLayer);
-//     }
-
-//     drawSimpleShapes() {
-
-//         const circle = new Konva.Circle({
-//             x: this.stage.width() / 2,
-//             y: this.stage.height() / 2,
-//             radius: 70,
-//             fill: '#F9E6E0',
-//             stroke: '#1486F5',
-//             strokeWidth: 4,
-//         });
-
-//         const rect3 = new Konva.Rect({
-//             x: 550,
-//             y: 320,
-//             width: 100,
-//             height: 100,
-//             fill: '#1486F5',
-//             cornerRadius: [0, 10, 20, 30],
-//         });
-
-//         const rect4 = new Konva.Rect({
-//             x: 850,
-//             y: 120,
-//             width: 100,
-//             height: 100,
-//             fill: '#FF00B8'
-//         });
-
-//         this.mainLayer.add(rect3);
-//         this.mainLayer.add(rect4);
-//         this.mainLayer.add(circle);
-//         this.mainLayer.draw();
-//     }
-// }
-
-
-
 // WhiteBoard.js
 import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Circle, Rect } from "react-konva";
 import { BackLayerRender } from "./BackLayerRender";
+import DrawNode from "./DrawNode.jsx";
 
 const width = window.innerWidth;
 const height = window.innerHeight;
@@ -105,7 +20,7 @@ function generateBackgroundLayer() {
   return ({
     key: "backgroundLayer",
     id: "backgroundLayer",
-    x: width + padding,
+    x: width,
     y: height + padding,
     // scale: 1,
   });
@@ -113,9 +28,13 @@ function generateBackgroundLayer() {
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = () => {
+export const WhiteBoard = ({fileDrop}) => {
   const [backgroundLayerStat, setBackgroundLayerStat] = useState(INITIAL_BAKEGROUND_STATE);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+
+  }, [position.x, position.y]);
 
   const handleDragStart = (e) => {
     e.cancelBubble = true;
@@ -125,39 +44,18 @@ export const WhiteBoard = () => {
   const handleDragEnd = (e) => {
     e.cancelBubble = true;
     console.log('dragend');
-
+    
     // 獲取拖動結束後的位置
     const position = e.target.position();
+    const rel = e.target.getRelativePointerPosition();
     console.log(position);
-
+    console.log(rel);
     // 更新位置狀態
     setPosition({ x: position.x, y: position.y });
-
-    // let adjustedX = position.x;
-    // let adjustedY = position.y;
-
-    // if (position.x < 0) {
-    //   adjustedX = backgroundLayerStat.x + (-position.x);
-    // }
-    // if (position.y < 0) {
-    //   adjustedY = backgroundLayerStat.y + (-position.y);
-    // }
-
-    // setBackgroundLayerStat((prev) => ({
-    //   ...prev,
-    //   x: adjustedX,
-    //   y: adjustedY,
-    // }));
-    // const position = e.currentTarget.position();
-    // backLayerRender.updateGrid(this.width, this.height, position.x, position.y);
   };
 
-  useEffect(() => {
-
-  }, [position.x, position.y]);
-
   return (
-    <Stage 
+    <Stage
       width={width} 
       height={height}
       draggable={true}
@@ -188,6 +86,20 @@ export const WhiteBoard = () => {
         positiony={position.y} 
         step={step} 
       />
+      <DrawNode
+        fileCount={fileDrop.length}
+        circleRadius={60}
+        positionx={position.x} 
+        positiony={position.y} 
+      />
+      {/* <Layer>
+        <DrawNode
+          fileCount={fileDrop.length}
+          circleRadius={60}
+          positionx={position.x} 
+          positiony={position.y} 
+        />
+      </Layer> */}
     </Stage>
   );
 };
