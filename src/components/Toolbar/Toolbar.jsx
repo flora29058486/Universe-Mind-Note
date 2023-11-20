@@ -173,7 +173,7 @@ function Toolbar({onToolSelect}) {
             </List>
           </Drawer>
         </Grid>
-        <Grid item xs={6} md={6}>
+        <Grid item xs={9} md={9}>
           {selectedButton === 'Explorer' && (
             <FileTreeView selectedButton={selectedButton} />
           )}

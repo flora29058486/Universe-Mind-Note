@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Circle, Layer, Star } from 'react-konva';
 
+const screenLeftSidePixel = 480;
+
 const DrawNode = ({ dropnodeInfo, circleRadius, positionx, positiony }) => {
   const [nodes, setNodes] = useState();
   console.log(dropnodeInfo);
@@ -42,18 +44,14 @@ const DrawNode = ({ dropnodeInfo, circleRadius, positionx, positiony }) => {
     const NodesGenerate = dropnodeInfo.map((fileInfo, counter) => {
       const nodeId = fileInfo.nodeId;
       const fileName = fileInfo.fileName;
-      // const startx = positionx - (((squareSize - 1) * (circleRadius + 0.5 * padding)) / 2);
-      // const starty = positiony - (((squareSize - 1) * (circleRadius + 0.5 * padding)) / 2);
-      const startx = positionx
-      const starty = positiony
+      const startx = positionx - ((squareSize - 1) * (circleRadius + 0.5 * padding)) - screenLeftSidePixel;
+      const starty = positiony - ((squareSize - 1) * (circleRadius + 0.5 * padding));
+      
       return {
         id: nodeId,
         key: fileName,
-        // x: startx + (counter % squareSize) * (circleRadius * 2 + padding) + circleRadius,
-        // y: starty + Math.floor(counter / squareSize) * (circleRadius * 2 + padding) + circleRadius,
-        x: startx,
-
-        y: starty,
+        x: startx + (counter % squareSize) * (circleRadius * 2 + padding),
+        y: starty + Math.floor(counter / squareSize) * (circleRadius * 2 + padding),
         radius: circleRadius,
         fill: "blue", // 設置圓形的顏色
         draggable: true,
