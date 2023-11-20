@@ -4,6 +4,7 @@ import { Stage, Layer, Circle, Rect } from "react-konva";
 import { v4 as uuidv4 } from 'uuid';
 import { BackLayerRender } from "./BackLayerRender";
 import DrawNode from "./DrawNode.jsx";
+import DrawExistingNode from "./DrawExistingNode.jsx";
 
 const width = window.innerWidth;
 const height = window.innerHeight;
@@ -73,6 +74,28 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
     updateNodeInfo(fileDrop);
   }, [position.x, position.y, fileDrop]);
 
+  // 接收從DrawNode回傳資料
+  const handleNodeCreate = (newNode) => {
+    setNodeInfo(prevNodeInfo => {
+      const updatedNodes = prevNodeInfo.map(existingNode => {
+        // 在 newNode 陣列中尋找與現有節點相同 nodeId 的節點
+        const foundNode = newNode.find(newNodeItem => newNodeItem.id === existingNode.nodeId);
+  
+        // 如果找到相符的 nodeId，則更新其座標
+        if (foundNode) {
+          return {
+            ...existingNode,
+            x: foundNode.x,
+            y: foundNode.y,
+          };
+        }
+        return existingNode; // 其他情況返回原來的節點資訊
+      });
+      return updatedNodes; // 返回更新後的 nodeInfo
+    });
+    console.log(nodeInfo);
+  };
+
   const handleDragStart = (e) => {
     e.cancelBubble = true;
     console.log('dragstart');
@@ -134,12 +157,17 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
         positiony={position.y} 
       /> */}
       <Layer>
-        {/* <DrawExistingNode></DrawExistingNode> */}
+        {/* <DrawExistingNode
+          nodeInfo={nodeInfo}
+          circleRadius={60}
+        /> */}
         <DrawNode
           dropnodeInfo={dropnodeInfo}
           circleRadius={60}
           positionx={dropClientPosition.x} 
           positiony={dropClientPosition.y} 
+          // 接收回傳值
+          onNodeCreate={handleNodeCreate}
         />
         {/* <Circle
           key="{node.key}" // 或者適合的唯一屬性

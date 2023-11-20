@@ -3,12 +3,12 @@ import { Circle, Layer, Star } from 'react-konva';
 
 const screenLeftSidePixel = 480;
 
-const DrawNode = ({ dropnodeInfo, circleRadius, positionx, positiony }) => {
+const DrawNode = ({ dropnodeInfo, circleRadius, positionx, positiony, onNodeCreate }) => {
   const [nodes, setNodes] = useState();
-  console.log(dropnodeInfo);
+  // console.log(dropnodeInfo);
 
   const fileCount = dropnodeInfo.length;
-  console.log(fileCount);
+  // console.log(fileCount);
   const padding = 10; // 間距
   const squareSize = Math.ceil(Math.sqrt(fileCount)); // 正方形的邊長
 
@@ -58,6 +58,7 @@ const DrawNode = ({ dropnodeInfo, circleRadius, positionx, positiony }) => {
       }
     });
 
+    onNodeCreate(NodesGenerate);
     setNodes(NodesGenerate);
 
     return nodes;
