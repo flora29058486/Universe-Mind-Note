@@ -93,7 +93,7 @@ function Toolbar({onToolSelect}) {
         alignItems="stretch"
         spacing={0}
       >
-        <Grid item xs={1} md={1} sx={{ height: '100vh' }}>
+        <Grid item xs={3} md={3} sx={{ height: '100vh' }}>
           <Drawer
             open={true} 
             variant="permanent" 
@@ -173,7 +173,7 @@ function Toolbar({onToolSelect}) {
             </List>
           </Drawer>
         </Grid>
-        <Grid item xs={2} md={4}>
+        <Grid item xs={6} md={6}>
           {selectedButton === 'Explorer' && (
             <FileTreeView selectedButton={selectedButton} />
           )}

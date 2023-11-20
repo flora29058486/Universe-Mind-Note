@@ -1,6 +1,7 @@
 // WhiteBoard.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
 import { Stage, Layer, Circle, Rect } from "react-konva";
+import { v4 as uuidv4 } from 'uuid';
 import { BackLayerRender } from "./BackLayerRender";
 import DrawNode from "./DrawNode.jsx";
 
@@ -28,13 +29,49 @@ function generateBackgroundLayer() {
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = ({fileDrop}) => {
+export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
   const [backgroundLayerStat, setBackgroundLayerStat] = useState(INITIAL_BAKEGROUND_STATE);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [relPosToScreen, setRelPosToScreen] = useState({ x: 0, y: 0 });
+  // 這是全部Node的資訊
+  const [nodeInfo, setNodeInfo] = useState([]);
+  // 下面這個是拖進來時新增用
+  const [dropnodeInfo, setDropNodeInfo] = useState([]);
+
+
+  const updateNodeInfo = (newFileDrop) => {
+    const updatedNodeInfo = newFileDrop.map(filePath => {
+      const fileNameWithExtension = filePath.split('\\').pop(); // 取得檔案名稱含副檔名
+      const fileExtension = fileNameWithExtension.split('.').pop(); // 取得副檔名
+      const fileName = fileNameWithExtension.replace('.' + fileExtension, ''); // 取得不含副檔名的檔案名稱部分
+
+      return {
+        nodeId: uuidv4(),
+        fileName: fileName,
+        nodeType: 'normal',
+
+
+        nodeIcon: fileExtension,
+        attribute: [],
+        childNode: [],
+        x: null,
+        y: null,
+      };
+    });
+
+    // 更新 nodeInfo
+    setDropNodeInfo(updatedNodeInfo);
+    setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...updatedNodeInfo]);
+    console.log(updatedNodeInfo);
+  };
+
+
+    // // 呼叫這個函數來更新 nodeInfo
+    // updateNodeInfo();
 
   useEffect(() => {
-
-  }, [position.x, position.y]);
+    updateNodeInfo(fileDrop);
+  }, [position.x, position.y, fileDrop]);
 
   const handleDragStart = (e) => {
     e.cancelBubble = true;
@@ -48,10 +85,14 @@ export const WhiteBoard = ({fileDrop}) => {
     // 獲取拖動結束後的位置
     const position = e.target.position();
     const rel = e.target.getRelativePointerPosition();
+    console.log(e.target);
+
+
     console.log(position);
     console.log(rel);
     // 更新位置狀態
     setPosition({ x: position.x, y: position.y });
+    setRelPosToScreen(rel);
   };
 
   return (
@@ -86,20 +127,29 @@ export const WhiteBoard = ({fileDrop}) => {
         positiony={position.y} 
         step={step} 
       />
-      <DrawNode
+      {/* <DrawNode
         fileCount={fileDrop.length}
         circleRadius={60}
         positionx={position.x} 
         positiony={position.y} 
-      />
-      {/* <Layer>
+      /> */}
+      <Layer>
+        {/* <DrawExistingNode></DrawExistingNode> */}
         <DrawNode
-          fileCount={fileDrop.length}
+          dropnodeInfo={dropnodeInfo}
           circleRadius={60}
-          positionx={position.x} 
-          positiony={position.y} 
+          positionx={dropClientPosition.x} 
+          positiony={dropClientPosition.y} 
         />
-      </Layer> */}
+        {/* <Circle
+          key="{node.key}" // 或者適合的唯一屬性
+          id="{node.id}"
+          x={0}
+          y={0}
+          radius={60}
+          fill="black" // 字符串形式的顏色
+        /> */}
+      </Layer>
     </Stage>
   );
 };

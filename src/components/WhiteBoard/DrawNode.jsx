@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Circle, Layer, Star } from 'react-konva';
 
-const DrawNode = ({ fileCount, circleRadius, positionx, positiony }) => {
+const DrawNode = ({ dropnodeInfo, circleRadius, positionx, positiony }) => {
   const [nodes, setNodes] = useState();
+  console.log(dropnodeInfo);
 
+  const fileCount = dropnodeInfo.length;
+  console.log(fileCount);
   const padding = 10; // 間距
   const squareSize = Math.ceil(Math.sqrt(fileCount)); // 正方形的邊長
 
@@ -34,74 +37,53 @@ const DrawNode = ({ fileCount, circleRadius, positionx, positiony }) => {
     );
   };
 
-  const generateNodes = () => {
-    const nodes = [];
-    console.log(positionx, positiony);
-    // const startx = positionx - ((squareSize * (circleRadius * 2 + padding)) / 2);
-    // const starty = positiony - ((squareSize * (circleRadius * 2 + padding)) / 2);
-    const startx = positionx - (((squareSize - 1) * (circleRadius + 0.5 * padding)) / 2)
-    const starty = positiony - (((squareSize - 1) * (circleRadius + 0.5 * padding)) / 2)
-    console.log(startx, starty);
+  const generateNodes = (dropnodeInfo) => {
 
+    const NodesGenerate = dropnodeInfo.map((fileInfo, counter) => {
+      const nodeId = fileInfo.nodeId;
+      const fileName = fileInfo.fileName;
+      // const startx = positionx - (((squareSize - 1) * (circleRadius + 0.5 * padding)) / 2);
+      // const starty = positiony - (((squareSize - 1) * (circleRadius + 0.5 * padding)) / 2);
+      const startx = positionx
+      const starty = positiony
+      return {
+        id: nodeId,
+        key: fileName,
+        // x: startx + (counter % squareSize) * (circleRadius * 2 + padding) + circleRadius,
+        // y: starty + Math.floor(counter / squareSize) * (circleRadius * 2 + padding) + circleRadius,
+        x: startx,
 
-
-    for (let i = 0; i < fileCount; i++) {
-      const row = Math.floor(i / squareSize);
-      const col = i % squareSize;
-      const x = startx + col * (circleRadius * 2 + padding) + circleRadius;
-      const y = starty + row * (circleRadius * 2 + padding) + circleRadius;
-      nodes.push({
-        key: i,
-        id: i.toString(),
-        x: x,
-        y: y,
+        y: starty,
         radius: circleRadius,
         fill: "blue", // 設置圓形的顏色
         draggable: true,
-      })
-    }
+      }
+    });
+
+    setNodes(NodesGenerate);
 
     return nodes;
   }
 
   useEffect(() => {
     if (positionx === 0 && positiony === 0) return;
-    setNodes(generateNodes());
+    generateNodes(dropnodeInfo);
     console.log("drawingNodes");
-  }, [fileCount]);
+  }, [dropnodeInfo]);
 
-  // return nodes && nodes.map((node) => (
-  //   <Circle
-  //     key={node.key} // 或者適合的唯一屬性
-  //     id={node.id}
-  //     x={node.x}
-  //     y={node.y}
-  //     radius={circleRadius}
-  //     fill="blue" // 字符串形式的顏色
-  //     draggable={true}
-  //     onDragStart={handleDragStart}
-  //     onDragEnd={handleDragEnd}
-  //   />
-  //   ))
-
-    return(
-      <Layer>
-        {nodes && nodes.map((node) => (
-          <Circle
-            key={node.key} // 或者適合的唯一屬性
-            id={node.id}
-            x={node.x}
-            y={node.y}
-            radius={circleRadius}
-            fill="blue" // 字符串形式的顏色
-            draggable={true}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          />
-        ))}
-      </Layer>
-    );
-  ;
+  return nodes && nodes.map((node) => (
+    <Circle
+      key={node.key} // 或者適合的唯一屬性
+      id={node.id}
+      x={node.x}
+      y={node.y}
+      radius={circleRadius}
+      fill="blue" // 字符串形式的顏色
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    />
+    ));
 };
 
 export default DrawNode;
