@@ -70,19 +70,20 @@ const DrawNode = ({ dropnodeInfo, circleRadius, positionx, positiony, onNodeCrea
     console.log("drawingNodes");
   }, [dropnodeInfo]);
 
-  return nodes && nodes.map((node) => (
-    <Circle
-      key={node.key} // 或者適合的唯一屬性
-      id={node.id}
-      x={node.x}
-      y={node.y}
-      radius={circleRadius}
-      fill="blue" // 字符串形式的顏色
-      draggable={true}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    />
-    ));
+  // return nodes && nodes.map((node) => (
+  //   <Circle
+  //     key={node.key} // 或者適合的唯一屬性
+  //     id={node.id}
+  //     x={node.x}
+  //     y={node.y}
+  //     radius={circleRadius}
+  //     fill="blue" // 字符串形式的顏色
+  //     draggable={true}
+  //     onDragStart={handleDragStart}
+  //     onDragEnd={handleDragEnd}
+  //   />
+  //   ));
+  return null;
 };
 
 export default DrawNode;

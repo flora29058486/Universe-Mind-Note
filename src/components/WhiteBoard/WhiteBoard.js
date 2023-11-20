@@ -157,10 +157,10 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
         positiony={position.y} 
       /> */}
       <Layer>
-        {/* <DrawExistingNode
+        <DrawExistingNode
           nodeInfo={nodeInfo}
           circleRadius={60}
-        /> */}
+        />
         <DrawNode
           dropnodeInfo={dropnodeInfo}
           circleRadius={60}
