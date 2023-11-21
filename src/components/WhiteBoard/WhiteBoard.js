@@ -6,13 +6,14 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 
 import { BackLayerRender } from "./BackLayerRender";
-import DrawNode from "./DrawNode.jsx";
+// import DrawNode from "./DrawNode.jsx";
 import DrawExistingNode from "./DrawExistingNode.jsx";
 
 const width = window.innerWidth;
 const height = window.innerHeight;
 const step = 60;
 const padding = 200;
+const screenLeftSidePixel = 480;
 
 function generateBackgroundLayer() {
   // return [...Array(10)].map((_, i) => ({
@@ -34,6 +35,7 @@ function generateBackgroundLayer() {
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
 export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
+  const prevFileDrop = useRef(fileDrop);
   const [backgroundLayerStat, setBackgroundLayerStat] = useState(INITIAL_BAKEGROUND_STATE);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [relPosToScreen, setRelPosToScreen] = useState({ x: 0, y: 0 });
@@ -44,20 +46,40 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
   // NodeContextMenu
   const [contextMenu, setContextMenu] = useState(null);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+    
+  const generateNodes = (nodeInfo, dropClientPosition) => {
+    const fileCount = nodeInfo.length;
+    const squareSize = Math.ceil(Math.sqrt(fileCount));
+    const circleRadius = 60;
+    const paddingNodeCreate = 10;
 
+    const NodesGenerate = nodeInfo.map((fileInfo, counter) => {
+      const nodeId = fileInfo.nodeId;
+      const fileName = fileInfo.fileName;
+      const startx = dropClientPosition.x - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate)) - screenLeftSidePixel;
+      const starty = dropClientPosition.y - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate));
+      
+      return {
+        ...fileInfo,
+        key: fileName + nodeId,
+        x: startx + (counter % squareSize) * (circleRadius * 2 + paddingNodeCreate),
+        y: starty + Math.floor(counter / squareSize) * (circleRadius * 2 + paddingNodeCreate),
+      };
+    });
 
-  const updateNodeInfo = (newFileDrop) => {
-    const updatedNodeInfo = newFileDrop.map(filePath => {
-      const fileNameWithExtension = filePath.split('\\').pop(); // 取得檔案名稱含副檔名
-      const fileExtension = fileNameWithExtension.split('.').pop(); // 取得副檔名
-      const fileName = fileNameWithExtension.replace('.' + fileExtension, ''); // 取得不含副檔名的檔案名稱部分
+    return NodesGenerate;
+  };
+
+  const updateNodeInfo = (nodeInfo) => {
+    const updatedNodeInit = nodeInfo.map(filePath => {
+      const fileNameWithExtension = filePath.split('\\').pop();
+      const fileExtension = fileNameWithExtension.split('.').pop();
+      const fileName = fileNameWithExtension.replace('.' + fileExtension, '');
 
       return {
         nodeId: uuidv4(),
         fileName: fileName,
         nodeType: 'normal',
-
-
         nodeIcon: fileExtension,
         attribute: [],
         childNode: [],
@@ -66,41 +88,18 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
       };
     });
 
-    // 更新 nodeInfo
-    setDropNodeInfo(updatedNodeInfo);
-    setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...updatedNodeInfo]);
-    console.log(updatedNodeInfo);
+    const NodesGenerate = generateNodes(updatedNodeInit, dropClientPosition);
+    console.log(NodesGenerate);
+    setDropNodeInfo(NodesGenerate);
+    setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...NodesGenerate]);
   };
 
-
-    // // 呼叫這個函數來更新 nodeInfo
-    // updateNodeInfo();
-
-  useEffect(() => {
-    updateNodeInfo(fileDrop);
-  }, [position.x, position.y, fileDrop]);
-
-  // 接收從DrawNode回傳資料
-  const handleNodeCreate = (newNode) => {
-    setNodeInfo(prevNodeInfo => {
-      const updatedNodes = prevNodeInfo.map(existingNode => {
-        // 在 newNode 陣列中尋找與現有節點相同 nodeId 的節點
-        const foundNode = newNode.find(newNodeItem => newNodeItem.id === existingNode.nodeId);
-  
-        // 如果找到相符的 nodeId，則更新其座標
-        if (foundNode) {
-          return {
-            ...existingNode,
-            x: foundNode.x,
-            y: foundNode.y,
-          };
-        }
-        return existingNode; // 其他情況返回原來的節點資訊
-      });
-      return updatedNodes; // 返回更新後的 nodeInfo
-    });
-    console.log(nodeInfo);
-  };
+    useEffect(() => {
+      if (prevFileDrop.current !== fileDrop) {
+        updateNodeInfo(fileDrop);
+        prevFileDrop.current = fileDrop;
+      }
+    }, [fileDrop, position.x, position.y]);
 
   const handleDragStart = (e) => {
     e.cancelBubble = true;
@@ -129,6 +128,8 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
     e.evt.preventDefault();
     if (e.target.attrs.name === 'node') {
       console.log('Is node');
+      console.log(e.target);
+      console.log(e.target.attrs);
       setContextMenu({
         mouseX: e.evt.clientX,
         mouseY: e.evt.clientY,
@@ -159,33 +160,11 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
           positiony={position.y} 
           step={step} 
         />
-        {/* <DrawNode
-          fileCount={fileDrop.length}
-          circleRadius={60}
-          positionx={position.x} 
-          positiony={position.y} 
-        /> */}
         <Layer>
           <DrawExistingNode
             nodeInfo={nodeInfo}
             circleRadius={60}
           />
-          <DrawNode
-            dropnodeInfo={dropnodeInfo}
-            circleRadius={60}
-            positionx={dropClientPosition.x} 
-            positiony={dropClientPosition.y} 
-            // 接收回傳值
-            onNodeCreate={handleNodeCreate}
-          />
-          {/* <Circle
-            key="{node.key}" // 或者適合的唯一屬性
-            id="{node.id}"
-            x={0}
-            y={0}
-            radius={60}
-            fill="black" // 字符串形式的顏色
-          /> */}
         </Layer>
       </Stage>
       <Menu
