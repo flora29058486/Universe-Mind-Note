@@ -58,10 +58,10 @@ export default function App() {
       <Grid item xs={toolSelect ? 4 : 1} md={toolSelect ? 4 : 1}>
         {/* 呼叫你的組件 */}
         <Toolbar onToolSelect={handleToolSelect}/>
-        <ToggleButtonOnMainKonva/>
       </Grid>
       {/* 右邊的內容 */}
-      <Grid item xs={toolSelect ? 8 : 11} md={toolSelect ? 8 : 11}>
+      <Grid item xs={toolSelect ? 8 : 11} md={toolSelect ? 8 : 11} position={"relative"}>
+        <ToggleButtonOnMainKonva/>
         <div 
           id="konva-container"
           onDrop={handleDropOutside}
@@ -76,21 +76,3 @@ export default function App() {
     </Grid>
   );
 }
-
-
-
-    // <div>
-    //   <Toolbar onToolSelect={handleToolSelect}/>
-    //   <div 
-    //     id="konva-container"
-    //     onDrop={handleDropOutside}
-    //     onDragOver={(e) => e.preventDefault()}
-    //   >
-    //     <ToggleButtonOnMainKonva/>
-    //     <WhiteBoard 
-    //       fileDrop={fileDrag}
-    //       dropClientPosition={dropClientPosition}
-    //       // onPositionInfo={handlePositionInfo}
-    //     />
-    //   </div>
-    // </div>

@@ -20,7 +20,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius }) => {
     // }
     return {
       id: node.nodeId,
-      key: node.fileName,
+      key: node.fileName + node.nodeId,
       x: node.x,
       y: node.y,
     };
@@ -59,6 +59,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius }) => {
       key={node.key}
       x={node.x}
       y={node.y}
+      name="node"
       radius={circleRadius}
       fill="blue"
       draggable={true}

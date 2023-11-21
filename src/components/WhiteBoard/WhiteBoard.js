@@ -2,6 +2,9 @@
 import React, { useState, useEffect, useRef, useId } from 'react';
 import { Stage, Layer, Circle, Rect } from "react-konva";
 import { v4 as uuidv4 } from 'uuid';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+
 import { BackLayerRender } from "./BackLayerRender";
 import DrawNode from "./DrawNode.jsx";
 import DrawExistingNode from "./DrawExistingNode.jsx";
@@ -38,6 +41,9 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
   const [nodeInfo, setNodeInfo] = useState([]);
   // 下面這個是拖進來時新增用
   const [dropnodeInfo, setDropNodeInfo] = useState([]);
+  // NodeContextMenu
+  const [contextMenu, setContextMenu] = useState(null);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
 
 
   const updateNodeInfo = (newFileDrop) => {
@@ -118,22 +124,33 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
     setRelPosToScreen(rel);
   };
 
+  // 右鍵點擊展開Node選單
+  const handleContextMenu = (e) => {
+    e.evt.preventDefault();
+    if (e.target.attrs.name === 'node') {
+      console.log('Is node');
+      setContextMenu({
+        mouseX: e.evt.clientX,
+        mouseY: e.evt.clientY,
+      });
+      setContextMenuPosition({ x: e.evt.clientX, y: e.evt.clientY });
+      return;
+    }
+  };
+
+  const handleContextMenuClose = () => {
+    setContextMenu(null);
+  };
+
   return (
-    <Stage
-      width={width} 
-      height={height}
-      draggable={true}
-      onDragEnd={handleDragEnd}
-    >
-      {/* <Layer
-        key={backgroundLayerStat.id}
-        id={backgroundLayerStat.id}
-        x={backgroundLayerStat.x}
-        y={backgroundLayerStat.y}
-        // draggable
-        isListening={false}
-        // onDragStart={handleDragStart}
-        // onDragEnd={handleDragEnd}
+    <div>
+      <Stage
+        width={width} 
+        height={height}
+        draggable={true}
+        id='stage'
+        onDragEnd={handleDragEnd}
+        onContextMenu={handleContextMenu}
       >
         <BackLayerRender 
           width={width} 
@@ -142,42 +159,51 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
           positiony={position.y} 
           step={step} 
         />
-      </Layer> */}
-      <BackLayerRender 
-        width={width} 
-        height={height} 
-        positionx={position.x} 
-        positiony={position.y} 
-        step={step} 
-      />
-      {/* <DrawNode
-        fileCount={fileDrop.length}
-        circleRadius={60}
-        positionx={position.x} 
-        positiony={position.y} 
-      /> */}
-      <Layer>
-        <DrawExistingNode
-          nodeInfo={nodeInfo}
+        {/* <DrawNode
+          fileCount={fileDrop.length}
           circleRadius={60}
-        />
-        <DrawNode
-          dropnodeInfo={dropnodeInfo}
-          circleRadius={60}
-          positionx={dropClientPosition.x} 
-          positiony={dropClientPosition.y} 
-          // 接收回傳值
-          onNodeCreate={handleNodeCreate}
-        />
-        {/* <Circle
-          key="{node.key}" // 或者適合的唯一屬性
-          id="{node.id}"
-          x={0}
-          y={0}
-          radius={60}
-          fill="black" // 字符串形式的顏色
+          positionx={position.x} 
+          positiony={position.y} 
         /> */}
-      </Layer>
-    </Stage>
+        <Layer>
+          <DrawExistingNode
+            nodeInfo={nodeInfo}
+            circleRadius={60}
+          />
+          <DrawNode
+            dropnodeInfo={dropnodeInfo}
+            circleRadius={60}
+            positionx={dropClientPosition.x} 
+            positiony={dropClientPosition.y} 
+            // 接收回傳值
+            onNodeCreate={handleNodeCreate}
+          />
+          {/* <Circle
+            key="{node.key}" // 或者適合的唯一屬性
+            id="{node.id}"
+            x={0}
+            y={0}
+            radius={60}
+            fill="black" // 字符串形式的顏色
+          /> */}
+        </Layer>
+      </Stage>
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleContextMenuClose}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleContextMenuClose}>Copy</MenuItem>
+        <MenuItem onClick={handleContextMenuClose}>Print</MenuItem>
+        <MenuItem onClick={handleContextMenuClose}>Highlight</MenuItem>
+        <MenuItem onClick={handleContextMenuClose}>Email</MenuItem>
+      </Menu>
+    </div>
+    
   );
 };

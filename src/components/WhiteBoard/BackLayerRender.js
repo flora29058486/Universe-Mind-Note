@@ -175,6 +175,7 @@ export const BackLayerRender = ({ width, height, positionx, positiony, step }) =
         y={y}
         width={step}
         height={step}
+        name='background'
         stroke="#e2e2ea"
         strokeWidth={1}
         lineCap="round"

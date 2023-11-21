@@ -7,21 +7,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
 import PanToolAltIcon from '@mui/icons-material/PanToolAlt';
 
-// const useStyles = makeStyles((theme) => ({
-//   root: {
-//     display: 'flex',
-//     flexDirection: 'column',
-//     alignItems: 'center',
-//     '& > *': {
-//       margin: theme.spacing(1),
-//     },
-//   },
-// }));
 const useStyles = makeStyles((theme) => ({
   root: {
     position: 'absolute',
-    top: '10%',
-    left: '50%',
+    top: '5%',
+    right: '0px',
+    // left: '50%',
     transform: 'translate(-50%, -50%)',
     zIndex: 1,
     // backgroundColor: 'black',
