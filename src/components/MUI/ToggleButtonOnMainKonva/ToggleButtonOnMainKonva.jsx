@@ -24,11 +24,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ToggleButtonOnMainKonva = () => {
+const ToggleButtonOnMainKonva = ({onToggleButtonSelect}) => {
   const classes = useStyles();
   const [selectedButton, setSelectedButton] = useState('');
+  const [toggleButtonValue, setToggleButtonValue] = useState('');
 
   const handleSelectedButton = (event, newSelectedButton) => {
+    onToggleButtonSelect(newSelectedButton);
     setSelectedButton(newSelectedButton);
   };
 

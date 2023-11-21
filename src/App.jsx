@@ -10,7 +10,10 @@ import KnovaBgImg from './components/knovaBg.jsx';
 import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 
 export default function App() {
+  // 螢幕左方工具列
   const [toolSelect, setToolSelect] = useState('');
+  // 畫布上的按鈕
+  const [toggleButton, setToggleButton] = useState('');
   const [fileDrag, setFileDrag] = useState([]);
   const [dropClientPosition, setDropClientPosition] = useState({ x: 0, y: 0 });
 
@@ -39,6 +42,11 @@ export default function App() {
     // console.log(toolSelect);
   };
 
+  const handleToggleButtonSelect = (tool) => {
+    console.log(tool);
+    setToggleButton(tool);
+  };
+
   const handleDropOutside = (e) => {
     // 讓檔案可以放在裡面
     e.preventDefault();
@@ -61,7 +69,7 @@ export default function App() {
       </Grid>
       {/* 右邊的內容 */}
       <Grid item xs={toolSelect ? 8 : 11} md={toolSelect ? 8 : 11} position={"relative"}>
-        <ToggleButtonOnMainKonva/>
+        <ToggleButtonOnMainKonva onToggleButtonSelect={handleToggleButtonSelect}/>
         <div 
           id="konva-container"
           onDrop={handleDropOutside}
@@ -69,6 +77,7 @@ export default function App() {
         >
           <WhiteBoard 
             fileDrop={fileDrag}
+            toggleButton={toggleButton}
             dropClientPosition={dropClientPosition}
           />
         </div>

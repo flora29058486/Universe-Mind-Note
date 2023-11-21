@@ -6,7 +6,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 
 import { BackLayerRender } from "./BackLayerRender";
-// import DrawNode from "./DrawNode.jsx";
 import DrawExistingNode from "./DrawExistingNode.jsx";
 
 const width = window.innerWidth;
@@ -16,13 +15,6 @@ const padding = 200;
 const screenLeftSidePixel = 480;
 
 function generateBackgroundLayer() {
-  // return [...Array(10)].map((_, i) => ({
-  //   id: i.toString(),
-  //   x: Math.random() * window.innerWidth,
-  //   y: Math.random() * window.innerHeight,
-  //   rotation: Math.random() * 180,
-  //   isDragging: false,
-  // }));
   return ({
     key: "backgroundLayer",
     id: "backgroundLayer",
@@ -34,7 +26,7 @@ function generateBackgroundLayer() {
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
+export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
   const prevFileDrop = useRef(fileDrop);
   const [backgroundLayerStat, setBackgroundLayerStat] = useState(INITIAL_BAKEGROUND_STATE);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -45,7 +37,8 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
   const [dropnodeInfo, setDropNodeInfo] = useState([]);
   // NodeContextMenu
   const [contextMenu, setContextMenu] = useState(null);
-  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  // FolderNodeCreateButton
+  const [folderCreatePosition, setFolderCreatePosition] = useState(null);
     
   const generateNodes = (nodeInfo, dropClientPosition) => {
     const fileCount = nodeInfo.length;
@@ -94,17 +87,43 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
     setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...NodesGenerate]);
   };
 
-    useEffect(() => {
-      if (prevFileDrop.current !== fileDrop) {
-        updateNodeInfo(fileDrop);
-        prevFileDrop.current = fileDrop;
-      }
-    }, [fileDrop, position.x, position.y]);
+  const generateFolderNode = (dropClientPosition) => {
+    console.log(folderCreatePosition);
+    return [{
+      nodeId: uuidv4(),
+      fileName: null,
+      nodeType: 'folder',
+      nodeIcon: 'folder',
+      attribute: [],
+      childNode: [],
+      x: dropClientPosition.x,
+      y: dropClientPosition.y,
+    }];
+  };
+
+  useEffect(() => {
+    if (prevFileDrop.current !== fileDrop) {
+      updateNodeInfo(fileDrop);
+      prevFileDrop.current = fileDrop;
+    }
+  }, [fileDrop, position.x, position.y]);
 
   const handleDragStart = (e) => {
     e.cancelBubble = true;
     console.log('dragstart');
   };
+
+  const handleClick = (e) => {
+    e.cancelBubble = true;
+    console.log(e.currentTarget.getPointerPosition());
+    console.log(e.currentTarget.getRelativePointerPosition());
+    const pos = e.currentTarget.getRelativePointerPosition();
+    if (toggleButton === "create") {
+      const NodesGenerate = generateFolderNode(pos);
+      console.log(NodesGenerate);
+      setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...NodesGenerate]);
+    };
+  }
 
   const handleDragEnd = (e) => {
     e.cancelBubble = true;
@@ -122,25 +141,25 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
     setPosition({ x: position.x, y: position.y });
     setRelPosToScreen(rel);
   };
+  
+  const handleContextMenuClose = () => {
+    setContextMenu(null);
+  };
 
   // 右鍵點擊展開Node選單
   const handleContextMenu = (e) => {
     e.evt.preventDefault();
+    handleContextMenuClose();
+    
     if (e.target.attrs.name === 'node') {
-      console.log('Is node');
       console.log(e.target);
-      console.log(e.target.attrs);
+      
       setContextMenu({
         mouseX: e.evt.clientX,
         mouseY: e.evt.clientY,
       });
-      setContextMenuPosition({ x: e.evt.clientX, y: e.evt.clientY });
       return;
     }
-  };
-
-  const handleContextMenuClose = () => {
-    setContextMenu(null);
   };
 
   return (
@@ -151,6 +170,7 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
         draggable={true}
         id='stage'
         onDragEnd={handleDragEnd}
+        onClick={handleClick}
         onContextMenu={handleContextMenu}
       >
         <BackLayerRender 
@@ -165,6 +185,10 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
             nodeInfo={nodeInfo}
             circleRadius={60}
           />
+          {/* <DrawFolderNode
+            folderCreatePosition={folderCreatePosition}
+            circleRadius={60}
+          /> */}
         </Layer>
       </Stage>
       <Menu
@@ -176,6 +200,10 @@ export const WhiteBoard = ({fileDrop, dropClientPosition}) => {
             ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
             : undefined
         }
+        onContextMenu={(e) => {
+          e.preventDefault(); // 防止瀏覽器預設的右鍵菜單
+          handleContextMenuClose(); // 關閉右鍵打開的 Menu
+        }}
       >
         <MenuItem onClick={handleContextMenuClose}>Copy</MenuItem>
         <MenuItem onClick={handleContextMenuClose}>Print</MenuItem>
