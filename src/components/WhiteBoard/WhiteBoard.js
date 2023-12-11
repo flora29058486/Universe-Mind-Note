@@ -178,18 +178,16 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
           height={height} 
           positionx={position.x} 
           positiony={position.y} 
-          step={step} 
+          step={step}
         />
-        <Layer>
-          <DrawExistingNode
-            nodeInfo={nodeInfo}
-            circleRadius={60}
-          />
-          {/* <DrawFolderNode
-            folderCreatePosition={folderCreatePosition}
-            circleRadius={60}
-          /> */}
-        </Layer>
+        <DrawExistingNode
+          nodeInfo={nodeInfo}
+          circleRadius={60}
+        />
+        {/* <DrawFolderNode
+          folderCreatePosition={folderCreatePosition}
+          circleRadius={60}
+        /> */}
       </Stage>
       <Menu
         open={contextMenu !== null}
