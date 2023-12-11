@@ -91,6 +91,22 @@ const DrawExistingNode = ({ nodeInfo, circleRadius }) => {
     // Perform actions on drag leave
   };
 
+  const handleDblClick = async (index) => {
+    const clickedNodeId = nodes[index].id;
+    const clickedNode = nodeInfo.find((node) => node.nodeId === clickedNodeId);
+    const openNodeFilePath = clickedNode.filepath;
+    console.log(openNodeFilePath);
+  
+    try {
+      await window.electronAPI.openFile(openNodeFilePath);
+      console.log(`Node ${nodes[index].id} double clicked`);
+      console.log(clickedNode);
+      // Perform actions on double click
+    } catch (error) {
+      console.error('Error opening file:', error);
+    }
+  };
+
   const handleDragOver = (index) => {
     console.log(`Node ${nodes[index].id} is being dragged over.`);
     // Perform actions on drag over
@@ -121,6 +137,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius }) => {
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
+            onDblClick={() => handleDblClick(index)}
             onDragEnter={() => handleDragEnter(index)}
             onDragLeave={() => handleDragLeave(index)}
             onDragOver={() => handleDragOver(index)}

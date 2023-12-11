@@ -1,8 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
-const fs = require('fs')
-const https = require('https')
-
+const fs = require('fs');
+const { exec } = require('child_process');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -91,11 +90,50 @@ async function handleOpenFolder() {
   }
 }
 
+const handleOpenFile = async (event, filePathToOpen) => {
+  const filepath = filePathToOpen;
 
+  // 檢查作業系統類型
+  const platform = process.platform;
+
+  if (platform === 'win32') {
+    // Windows 使用 start 命令打開檔案
+    exec(`start "" "${filepath}"`, (err, stdout, stderr) => {
+      if (err) {
+        console.error('Error opening the file:', err);
+        return;
+      }
+      console.log('File opened successfully');
+    });
+  } else if (platform === 'darwin') {
+    // macOS 使用 open 命令打開檔案
+    execFile(`open "" "${filepath}"`, (err, stdout, stderr) => {
+      if (err) {
+        console.error('Error opening the file:', err);
+        return;
+      }
+      console.log('File opened successfully');
+    });
+  } else if (platform === 'linux') {
+    // Linux 使用 xdg-open 命令打開檔案
+    execFile(`xdg-open "" "${filepath}"`, (err, stdout, stderr) => {
+      if (err) {
+        console.error('Error opening the file:', err);
+        return;
+      }
+      console.log('File opened successfully');
+    });
+  } else {
+    console.error('Unsupported platform');
+  }
+}
 
 const createWindow = () => {
   // Import Folder files
   ipcMain.handle('dialog:openFolder', handleOpenFolder);
+  // Open File
+  ipcMain.handle('main:openFile', handleOpenFile);
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,

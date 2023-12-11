@@ -11,6 +11,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     console.log("ww")
     return files;
   },
+  openFile: async (filePath) => {
+    await ipcRenderer.invoke('main:openFile', filePath);
+    return;
+  },
 })
 
 // contextBridge.exposeInIsolatedWorld('foldercontents', {

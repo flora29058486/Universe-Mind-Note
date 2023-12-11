@@ -72,6 +72,7 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
       return {
         nodeId: uuidv4(),
         fileName: fileName,
+        filepath: filePath,
         nodeType: 'normal',
         nodeIcon: fileExtension,
         attribute: [],
