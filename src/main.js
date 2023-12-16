@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const nativeImage = require('electron').nativeImage
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -128,11 +129,27 @@ const handleOpenFile = async (event, filePathToOpen) => {
   }
 }
 
+const handleLoadFileIcon = async (_, filePath) => {
+  console.log(filePath);
+  try {
+    // 進行相應的操作，這裡可以是讀取文件的圖示等
+    const icon = await app.getFileIcon(filePath, { size: 'normal' });
+    const iconData = icon.toDataURL();
+    // 返回文件圖示的 base64 字符串給呼叫方（preload）
+    return iconData;
+  } catch (error) {
+    console.error('Error while loading FileIcons:', error);
+    throw error;
+  }
+}
+
 const createWindow = () => {
   // Import Folder files
   ipcMain.handle('dialog:openFolder', handleOpenFolder);
   // Open File
   ipcMain.handle('main:openFile', handleOpenFile);
+  // Load FileIcon
+  ipcMain.handle('main:loadIcon', handleLoadFileIcon);
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({

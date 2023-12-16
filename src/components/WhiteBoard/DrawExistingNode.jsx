@@ -1,22 +1,56 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Circle, Layer } from 'react-konva';
+import { Circle, Layer, Text, Group } from 'react-konva';
 
-const DrawExistingNode = ({ nodeInfo, circleRadius }) => {
+const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
   const [nodes, setNodes] = useState([]);
   const [previousShape, setPreviousShape] = useState(null);
+  const [nodeMoving, setNodeMoving] = useState(null);
   const existingNodeLayerRef = useRef();
   const moveNodeTempLayerRef = useRef();
+  const nodesRef = useRef([]);
 
   useEffect(() => {
-    setNodes(
-      nodeInfo.map((node) => ({
-        id: node.nodeId,
-        key: node.fileName + node.nodeId,
+
+    // 設定繪製的所有node
+    const updatedNodes = nodeInfo.map(async (node) => {
+      let fileIconBase64;
+      const filePath = node.filepath;
+
+      if (node.nodeType === 'folder') {
+        fileIconBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA1klEQVR4nO2WXwrCMAzGK4jgDRLxBB7B3ULv5PTBMwlrFA8geAD/HGKJRIqbiJuCsG4P5oM+9eH7NUnbzzmTqZAeJgP2sGLCqxDq62KPN/ZwZA8zF0tMsHw3roAQSr4dTeMAeLgEkzoD3bg+e1wXIHtV12scQIpTftrX3XjIHk6PSsA8GoBEXKHKodVh3joBkOcsQfpzC5pQnmFSVqITgK8+YgBkLUAbQrVrKPYQkT3F2N1nxGUkyzBp4Ts+VwEI0hYDyaI+lhOkZSUiRbJzMK+NZKa/1R38hE+Lh2UeTwAAAABJRU5ErkJggg==";
+      } else {
+        fileIconBase64 = await window.electronAPI.loadIcon(filePath);
+      };
+      const img = new Image();
+      img.src = fileIconBase64;
+      img.onload = () => {
+        // 在此處更新狀態或進行其他操作
+      };
+    
+      return {
+        nodeId: node.nodeId,
+        fileName: node.fileName,
+        filepath: node.filepath,
+        nodeType: node.nodeType,
+        nodeIcon: node.nodeIcon,
+        attribute: node.attribute,
+        childNode: node.childNode,
         x: node.x,
         y: node.y,
-        isDragging: false, // 初始化拖曳狀態為 false
-      }))
-    );
+        isDragging: false,
+        fileIcon: img, // 將 fileIcon 加入節點對象
+        key: node.fileName + node.nodeId,
+      };
+    });
+
+    // 在這裡等待所有 Promise 完成後，再設置 nodes 的狀態
+    Promise.all(updatedNodes).then((updatedNodesArray) => {
+      setNodes(updatedNodesArray);
+    });
+
+    // 將更新資訊傳出
+    onUpdateNodeInfo(nodesRef.current);
+
   }, [nodeInfo]);
 
   const handleDragStart = (e) => {
@@ -27,20 +61,18 @@ const DrawExistingNode = ({ nodeInfo, circleRadius }) => {
     setNodes((prevNodes) =>
       prevNodes.map((node) => ({
         ...node,
-        isDragging: node.id === id,
+        isDragging: node.nodeId === id,
       }))
     );
   };
 
   const handleDragMove = (e) => {
     const shapeMoving = e.target;
-    console.log(shapeMoving)
 
+    // Change the Layer of MovingNode to temp Layer
     const pos = e.target.getStage().getPointerPosition();
     const existingNodeLayer = e.target.getStage().findOne('.existingNodeLayer');
     const encounterShape = existingNodeLayer.getIntersection(pos);
-
-    console.log(encounterShape);
 
     if (previousShape && encounterShape) {
       if (previousShape !== encounterShape) {
@@ -57,6 +89,11 @@ const DrawExistingNode = ({ nodeInfo, circleRadius }) => {
       previousShape.fire('dragleave', { evt: e.evt }, true);
       setPreviousShape(null);
     }
+
+    // Set moving node Info
+    const nodeId = e.target.attrs.id;
+    // Find the node with nodeId
+    setNodeMoving(nodes.find(node => node.nodeId === nodeId));
   };
 
   const handleDragEnd = (e) => {
@@ -81,40 +118,61 @@ const DrawExistingNode = ({ nodeInfo, circleRadius }) => {
     e.target.moveTo(existingNodeLayerRef.current);
   };
 
-  const handleDragEnter = (index) => {
-    console.log(`Node ${nodes[index].id} entered.`);
+  const handleDragEnter = (node, index) => {
+    console.log(`Node ${nodes[index].nodeId} entered.`);
     // Perform actions on drag enter
   };
 
   const handleDragLeave = (index) => {
-    console.log(`Node ${nodes[index].id} left.`);
+    console.log(`Node ${nodes[index].nodeId} left.`);
     // Perform actions on drag leave
   };
 
-  const handleDblClick = async (index) => {
-    const clickedNodeId = nodes[index].id;
+  const handleDblClick = async (node, index) => {
+    const clickedNodeId = node.nodeId;
     const clickedNode = nodeInfo.find((node) => node.nodeId === clickedNodeId);
-    const openNodeFilePath = clickedNode.filepath;
-    console.log(openNodeFilePath);
-  
-    try {
-      await window.electronAPI.openFile(openNodeFilePath);
-      console.log(`Node ${nodes[index].id} double clicked`);
-      console.log(clickedNode);
-      // Perform actions on double click
-    } catch (error) {
-      console.error('Error opening file:', error);
+
+    if (node.nodeType !== 'folder') {
+
+      // Open the nodefile on computer
+      const openNodeFilePath = clickedNode.filepath;
+      console.log(openNodeFilePath);
+      try {
+        await window.electronAPI.openFile(openNodeFilePath);
+        console.log(clickedNode);
+      } catch (error) {
+        console.error('Error opening file:', error);
+      }
+    } else {
+      return;
     }
   };
 
-  const handleDragOver = (index) => {
-    console.log(`Node ${nodes[index].id} is being dragged over.`);
-    // Perform actions on drag over
+  const handleDragOver = (node, index) => {
+    // console.log(`${nodes[index].fileName} being dragged over`);
   };
 
-  const handleDrop = (index) => {
-    console.log(`Node ${nodes[index].id} dropped.`);
-    // Perform actions on drop
+  const handleDrop = (node, index) => {
+    const dropFolder = node;
+
+    if (dropFolder.nodeType === 'folder' && nodeMoving !== null) {
+
+      // updateNode Info: Delete node on Knova, send it to folder
+      const nodeToDropId = nodeMoving.nodeId;
+      const updatedChildInfo = [...dropFolder.childNode, nodeMoving];
+      const updatedNode = { ...dropFolder, childNode: updatedChildInfo };
+  
+      const updatedNodes = nodes
+        .map((n) => (n.nodeId === dropFolder.nodeId ? updatedNode : n))
+        .filter((n) => n.nodeId !== nodeToDropId);
+  
+      setNodes(updatedNodes);
+      nodesRef.current = updatedNodes;
+      onUpdateNodeInfo(nodesRef.current);
+      setNodeMoving(null);
+    } else {
+      return;
+    }
   };
 
   
@@ -125,24 +183,46 @@ const DrawExistingNode = ({ nodeInfo, circleRadius }) => {
     <>
       <Layer name="existingNodeLayer" ref={existingNodeLayerRef}>
         {nodes.map((node, index) => (
-          <Circle
-            id={node.id}
-            key={node.key}
+          <Group
+            id={node.nodeId}
             x={node.x}
             y={node.y}
-            name="node"
-            radius={circleRadius}
-            fill={node.isDragging ? 'green' : 'blue'}
+            key={node.key}
             draggable
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
-            onDblClick={() => handleDblClick(index)}
-            onDragEnter={() => handleDragEnter(index)}
+            onDragEnter={() => handleDragEnter(node, index)}
             onDragLeave={() => handleDragLeave(index)}
-            onDragOver={() => handleDragOver(index)}
-            onDrop={() => handleDrop(index)}
-          />
+            onDragOver={() => handleDragOver(node, index)}
+            onDrop={() => handleDrop(node, index)}
+          >
+            <Circle
+              key={node.key + "FileIcon"}
+              name="node"
+              radius={circleRadius}
+              fillPatternImage={node.fileIcon}
+              fillPatternOffset={{ x: 16 , y: 16 }}
+              // fillPatternScale={ x: e.target.radius() * 2 / img.width, y: e.target.radius() * 2 / img.height }
+              fillPatternRepeat={'no-repeat'}
+              fillPatternScaleX={2}
+              fillPatternScaleY={2}
+              onDblClick={() => handleDblClick(node, index)}
+            />
+            <Text
+              text={node.fileName}
+              key={node.key + "fileName"}
+              fontSize={17}
+              fill="black"
+              align="center"
+              width={circleRadius * 2} // 文字框寬度與 Circle 半徑相同
+              height={40} // 文字框高度
+              offsetY={-circleRadius*0.7} // 微調位置，加上一些偏移量
+              offsetX={circleRadius} // 水平居中
+              wrap="char" // 換行
+              ellipsis="..." // 省略號
+            />
+          </Group>
         ))}
       </Layer>
       <Layer name="moveNodeTempLayer" ref={moveNodeTempLayerRef}>

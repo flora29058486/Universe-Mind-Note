@@ -39,6 +39,8 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
   const [contextMenu, setContextMenu] = useState(null);
   // FolderNodeCreateButton
   const [folderCreatePosition, setFolderCreatePosition] = useState(null);
+  // accept nodeInfo change from DrawExistingNode
+  const updateNodeInfoRef = useRef([]);
     
   const generateNodes = (nodeInfo, dropClientPosition) => {
     const fileCount = nodeInfo.length;
@@ -92,7 +94,7 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
     console.log(folderCreatePosition);
     return [{
       nodeId: uuidv4(),
-      fileName: null,
+      fileName: "新的資料夾",
       nodeType: 'folder',
       nodeIcon: 'folder',
       attribute: [],
@@ -100,6 +102,16 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
       x: dropClientPosition.x,
       y: dropClientPosition.y,
     }];
+  };
+
+  const handleUpdateNodeInfo = (updatedNodes) => {
+    // If updateNodes (value from DrawExistingNode) is not equal to updateNodeInfoRef, (the value has change)
+    const prevUpdatedNodes = updateNodeInfoRef.current;
+
+    if (JSON.stringify(prevUpdatedNodes) !== JSON.stringify(updatedNodes)) {
+      setNodeInfo(updatedNodes);
+      updateNodeInfoRef.current = updatedNodes;
+    }
   };
 
   useEffect(() => {
@@ -182,13 +194,12 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
           step={step}
         />
         <DrawExistingNode
+          // whiteBoard to draw node
           nodeInfo={nodeInfo}
           circleRadius={60}
+          // draw node to whiteBoard
+          onUpdateNodeInfo={handleUpdateNodeInfo}
         />
-        {/* <DrawFolderNode
-          folderCreatePosition={folderCreatePosition}
-          circleRadius={60}
-        /> */}
       </Stage>
       <Menu
         open={contextMenu !== null}

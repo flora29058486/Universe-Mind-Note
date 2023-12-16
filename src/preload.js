@@ -15,6 +15,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     await ipcRenderer.invoke('main:openFile', filePath);
     return;
   },
+  loadIcon: async (filePath) => {
+    try {
+      // 使用 ipcRenderer 來發送 'main:openFile' 請求到主進程
+      const iconData = await ipcRenderer.invoke('main:loadIcon', filePath);
+      return iconData; // 返回從主進程獲取的文件圖示 base64 字符串
+    } catch (error) {
+      console.error('Error while opening file via electronAPI:', error);
+      throw error;
+    }
+  },
 })
 
 // contextBridge.exposeInIsolatedWorld('foldercontents', {
