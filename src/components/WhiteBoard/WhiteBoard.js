@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 
 import { BackLayerRender } from "./BackLayerRender";
 import DrawExistingNode from "./DrawExistingNode.jsx";
+import NodeDialog from '../NodeDetailInfo/NodeDialog.js';
 
 const width = window.innerWidth;
 const height = window.innerHeight;
@@ -41,6 +42,10 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
   const [folderCreatePosition, setFolderCreatePosition] = useState(null);
   // accept nodeInfo change from DrawExistingNode
   const updateNodeInfoRef = useRef([]);
+  // contextMenu CurrentShape
+  const contextMenuCurrentShape = useRef();
+  // handleNodeDialogOpen
+  const [nodeDialogOpen, setNodeDialogOpen] = useState(false);
     
   const generateNodes = (nodeInfo, dropClientPosition) => {
     const fileCount = nodeInfo.length;
@@ -79,6 +84,7 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
         nodeIcon: fileExtension,
         attribute: [],
         childNode: [],
+        filePath: null,
         x: null,
         y: null,
       };
@@ -104,7 +110,7 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
     }];
   };
 
-  const handleUpdateNodeInfo = (updatedNodes) => {
+  const handleFileIntoFolder = (updatedNodes) => {
     // If updateNodes (value from DrawExistingNode) is not equal to updateNodeInfoRef, (the value has change)
     const prevUpdatedNodes = updateNodeInfoRef.current;
 
@@ -112,6 +118,16 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
       setNodeInfo(updatedNodes);
       updateNodeInfoRef.current = updatedNodes;
     }
+  };
+
+  const handleDialogInfoChange = (updatedNodes) => {
+    setNodeInfo(nodes =>
+      nodes.map(node =>
+        node.nodeId === updatedNodes.nodeId
+          ? { ...node, fileName: updatedNodes.fileName, x: updatedNodes.x, y: updatedNodes.y }
+          : node
+      )
+    );
   };
 
   useEffect(() => {
@@ -131,9 +147,8 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
     console.log(e.currentTarget.getPointerPosition());
     console.log(e.currentTarget.getRelativePointerPosition());
     const pos = e.currentTarget.getRelativePointerPosition();
-    if (toggleButton === "create") {
+    if (toggleButton === "create" && e.evt.button === 0) {
       const NodesGenerate = generateFolderNode(pos);
-      console.log(NodesGenerate);
       setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...NodesGenerate]);
     };
   }
@@ -157,6 +172,7 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
   
   const handleContextMenuClose = () => {
     setContextMenu(null);
+    contextMenuCurrentShape.current = null;
   };
 
   // 右鍵點擊展開Node選單
@@ -165,6 +181,7 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
     handleContextMenuClose();
     
     if (e.target.attrs.name === 'node') {
+      contextMenuCurrentShape.current = e.target.getParent();
       console.log(e.target);
       
       setContextMenu({
@@ -173,6 +190,16 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
       });
       return;
     }
+  };
+
+  // Context Menu => NodeDetailInfo
+  const handleNodeDetailInfo = () => {
+    setNodeDialogOpen(true);
+    handleContextMenuClose();
+  };
+
+  const handleNodeDialogClose = () => {
+    setNodeDialogOpen(false);
   };
 
   return (
@@ -196,9 +223,9 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
         <DrawExistingNode
           // whiteBoard to draw node
           nodeInfo={nodeInfo}
-          circleRadius={60}
           // draw node to whiteBoard
-          onUpdateNodeInfo={handleUpdateNodeInfo}
+          onUpdateNodeInfo={handleFileIntoFolder}
+          circleRadius={60}
         />
       </Stage>
       <Menu
@@ -215,11 +242,18 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
           handleContextMenuClose(); // 關閉右鍵打開的 Menu
         }}
       >
-        <MenuItem onClick={handleContextMenuClose}>Copy</MenuItem>
+        <MenuItem onClick={handleNodeDetailInfo}>詳細資料</MenuItem>
         <MenuItem onClick={handleContextMenuClose}>Print</MenuItem>
         <MenuItem onClick={handleContextMenuClose}>Highlight</MenuItem>
         <MenuItem onClick={handleContextMenuClose}>Email</MenuItem>
       </Menu>
+      <NodeDialog
+        nodeInfo={nodeInfo}
+        currentNode={contextMenuCurrentShape.current}
+        open={nodeDialogOpen}
+        handleClose={handleNodeDialogClose}
+        onUpdateNodeInfo={handleDialogInfoChange}
+      />
     </div>
     
   );

@@ -128,6 +128,16 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
     // Perform actions on drag leave
   };
 
+  const handleClick = (e, node) => {
+    e.cancelBubble = true;
+
+    console.log(e.evt.button);
+    // Open nodeDialog
+    if (node.nodeType !== 'folder' && e.evt.button === 0) {
+      console.log('Open nodeDialog');
+    };
+  };
+
   const handleDblClick = async (node, index) => {
     const clickedNodeId = node.nodeId;
     const clickedNode = nodeInfo.find((node) => node.nodeId === clickedNodeId);
@@ -175,10 +185,6 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
     }
   };
 
-  
-
-  
-
   return (
     <>
       <Layer name="existingNodeLayer" ref={existingNodeLayerRef}>
@@ -207,6 +213,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
               fillPatternRepeat={'no-repeat'}
               fillPatternScaleX={2}
               fillPatternScaleY={2}
+              onClick={(e) => handleClick(e, node)}
               onDblClick={() => handleDblClick(node, index)}
             />
             <Text
