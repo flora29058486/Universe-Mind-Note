@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Divider } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Divider, IconButton, InputBase, TextField } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 
 const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo }) => {
   const [nodes, setNodes] = useState([]);
@@ -7,6 +8,7 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
   const [currentNodeId, setCurrentNodeId] = useState('');
   const [currentNodeLocation, setCurrentNodeLocation] = useState({x: 0, y: 0});
   const [nodeName, setNodeName] = useState('');
+  const [editTitle, setEditTitle] = useState(false);
   const nodesRef = useRef([]);
 
   useEffect(() => {
@@ -27,25 +29,75 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
+    setEditTitle(false);
     // update open status (whiteBoard)
     handleClose(true);
+  };
+
+  const handleEditTitle = () => {
+    setEditTitle(true);
   };
 
   const handleNameChange = (event) => {
     setNodeName(event.target.value);
   };
 
+  const handleTitleSave = (e) => {
+    e.stopPropagation();
+
+    const updateNode = {fileName: nodeName, nodeId: currentNodeId, x: currentNodeLocation.x, y: currentNodeLocation.y};
+    handleNodeInfoUpdate(updateNode);
+    setEditTitle(false);
+  };
+
+  const handleKeyDown = (e) => {
+    e.stopPropagation();
+    
+    if (e.key === 'Enter') {
+      const updateNode = {fileName: nodeName, nodeId: currentNodeId, x: currentNodeLocation.x, y: currentNodeLocation.y};
+      handleNodeInfoUpdate(updateNode);
+      setEditTitle(false);
+    }
+  };
+
   const handleSave = () => {
     const updateNode = {fileName: nodeName, nodeId: currentNodeId, x: currentNodeLocation.x, y: currentNodeLocation.y};
-    nodesRef.current = updateNode;
+    handleNodeInfoUpdate(updateNode);
     console.log(updateNode);
     handleCloseDialog();
   };
 
+  const handleNodeInfoUpdate = (upadteNode) => {
+    nodesRef.current = upadteNode;
+  };
+
   return (
-    <Dialog open={dialogOpen} onClose={handleCloseDialog}>
+    <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth='xs' fullWidth>
       <DialogTitle>
-        <input type="text" value={nodeName} onChange={handleNameChange} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {editTitle ? (
+            <TextField
+              value={nodeName}
+              onChange={handleNameChange}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              fullWidth
+              variant="standard"
+              inputProps={{ style: { fontSize: '1.5rem' } }}
+            />
+          ) : (
+            <span style={{ fontSize: '1.5rem' }}>{nodeName}</span>
+          )}
+          {editTitle ? (
+            <Button onClick={editTitle ? handleTitleSave : handleEditTitle}>
+              {'Save'}
+            </Button>
+          ) : (
+            <IconButton onClick={editTitle ? handleTitleSave : handleEditTitle}>
+              <EditIcon />
+            </IconButton>
+          )}
+        </div>
       </DialogTitle>
       <DialogContent>
         {nodeInfo.attribute && nodeInfo.attribute.length > 0 && (
