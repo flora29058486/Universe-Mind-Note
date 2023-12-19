@@ -42,6 +42,8 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
   const [folderCreatePosition, setFolderCreatePosition] = useState(null);
   // accept nodeInfo change from DrawExistingNode
   const updateNodeInfoRef = useRef([]);
+  // Dialog nodeIndo change from NodeDialog.js
+  const dialogNodeInfo = useRef({});
   // contextMenu CurrentShape
   const contextMenuCurrentShape = useRef();
   // handleNodeDialogOpen
@@ -120,14 +122,21 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
     }
   };
 
-  const handleDialogInfoChange = (updatedNodes) => {
-    setNodeInfo(nodes =>
-      nodes.map(node =>
-        node.nodeId === updatedNodes.nodeId
-          ? { ...node, fileName: updatedNodes.fileName, x: updatedNodes.x, y: updatedNodes.y }
-          : node
-      )
-    );
+  // handle modify node in Dialog
+  const handleDialogInfoChange = (updatedNode) => {
+    const prevDialogNodeInfo = dialogNodeInfo.current;
+
+    if (JSON.stringify(prevDialogNodeInfo) !== JSON.stringify(updatedNode)) {
+      setNodeInfo(nodes =>
+        nodes.map(node => {
+          if (node.nodeId === updatedNode.nodeId) {
+            return { ...node, fileName: updatedNode.fileName, x: updatedNode.x, y: updatedNode.y, attribute: updatedNode.attribute };
+          }
+          return node;
+        })
+      );
+      dialogNodeInfo.current = updatedNode;
+    }
   };
 
   useEffect(() => {
