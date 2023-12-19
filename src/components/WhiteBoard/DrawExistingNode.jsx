@@ -119,13 +119,47 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
   };
 
   const handleDragEnter = (node, index) => {
-    console.log(`Node ${nodes[index].nodeId} entered.`);
-    // Perform actions on drag enter
+    const dropFolder = node;
+
+    // if DragEnter a folder, change folder size and set moving node opacity
+    if (dropFolder.nodeType === 'folder' && nodeMoving !== null) {
+      const scaleGroups = existingNodeLayerRef.current.find(`#${dropFolder.nodeId}`);
+      const movingNodeGroups = moveNodeTempLayerRef.current.find(`#${nodeMoving.nodeId}`);
+      
+      if (scaleGroups.length > 0) {
+        const scaleGroup = scaleGroups[0];
+        scaleGroup.scale({x: 1.2, y: 1.2});
+  
+        const movingNodeGroup = movingNodeGroups[0];
+        movingNodeGroup.opacity(0.2);
+        
+        existingNodeLayerRef.current.batchDraw();
+      }
+    } else {
+      return;
+    }
   };
 
-  const handleDragLeave = (index) => {
-    console.log(`Node ${nodes[index].nodeId} left.`);
-    // Perform actions on drag leave
+  const handleDragLeave = (node, index) => {
+    const dropFolder = node;
+
+    // if DragLeave a folder, change folder size and set moving node opacity
+    if (dropFolder.nodeType === 'folder' && nodeMoving !== null) {
+      const scaleGroups = existingNodeLayerRef.current.find(`#${dropFolder.nodeId}`);
+      const movingNodeGroups = moveNodeTempLayerRef.current.find(`#${nodeMoving.nodeId}`);
+
+      if (scaleGroups.length > 0) {
+        const scaleGroup = scaleGroups[0];
+        scaleGroup.scale({x: 1, y: 1});
+  
+        const movingNodeGroup = movingNodeGroups[0];
+        movingNodeGroup.opacity(1);
+        
+        existingNodeLayerRef.current.batchDraw();
+      }
+    } else {
+      return;
+    }
   };
 
   const handleClick = (e, node) => {
@@ -159,13 +193,23 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
   };
 
   const handleDragOver = (node, index) => {
-    // console.log(`${nodes[index].fileName} being dragged over`);
+
+
   };
 
   const handleDrop = (node, index) => {
     const dropFolder = node;
 
     if (dropFolder.nodeType === 'folder' && nodeMoving !== null) {
+
+      // change folder size back
+      const scaleGroups = existingNodeLayerRef.current.find(`#${dropFolder.nodeId}`);
+      if (scaleGroups.length > 0) {
+        const scaleGroup = scaleGroups[0];
+        scaleGroup.scale({x: 1, y: 1});
+        
+        existingNodeLayerRef.current.batchDraw();
+      }
 
       // updateNode Info: Delete node on Knova, send it to folder
       const nodeToDropId = nodeMoving.nodeId;
@@ -199,7 +243,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
             onDragEnter={() => handleDragEnter(node, index)}
-            onDragLeave={() => handleDragLeave(index)}
+            onDragLeave={() => handleDragLeave(node, index)}
             onDragOver={() => handleDragOver(node, index)}
             onDrop={() => handleDrop(node, index)}
           >
@@ -227,7 +271,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
               offsetY={-circleRadius*0.7} // 微調位置，加上一些偏移量
               offsetX={circleRadius} // 水平居中
               wrap="char" // 換行
-              ellipsis="..." // 省略號
+              ellipsis={true} // 省略號
             />
           </Group>
         ))}

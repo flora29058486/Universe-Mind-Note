@@ -38,8 +38,6 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
   const [dropnodeInfo, setDropNodeInfo] = useState([]);
   // NodeContextMenu
   const [contextMenu, setContextMenu] = useState(null);
-  // FolderNodeCreateButton
-  const [folderCreatePosition, setFolderCreatePosition] = useState(null);
   // accept nodeInfo change from DrawExistingNode
   const updateNodeInfoRef = useRef([]);
   // Dialog nodeIndo change from NodeDialog.js
@@ -99,7 +97,6 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
   };
 
   const generateFolderNode = (dropClientPosition) => {
-    console.log(folderCreatePosition);
     return [{
       nodeId: uuidv4(),
       fileName: "新的資料夾",
