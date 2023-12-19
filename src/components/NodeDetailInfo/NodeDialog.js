@@ -19,6 +19,7 @@ function getTextColorForBackground(backgroundColor) {
 }
 
 const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo }) => {
+  const [isInitialMount, setIsInitialMount] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(open);
   const [value, setValue] = React.useState(0);
   const [editTitle, setEditTitle] = useState(false);
@@ -33,16 +34,22 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
   const labels = useRef(null);
 
   useEffect(() => {
-    setDialogOpen(open); 
-
+    if (isInitialMount) {
+      setIsInitialMount(false);
+    } else {
+      // 当 nodeData 更新且不是首次渲染时，调用 onUpdateNodeInfo
+      onUpdateNodeInfo(nodeData);
+    }
+  }, [nodeData, onUpdateNodeInfo]);
+  
+  useEffect(() => {
+    setDialogOpen(open);
+  
     if (currentNode) {
-      console.log(currentNode);
       const groupId = currentNode.attrs.id;
       const node = nodeInfo.find(node => node.nodeId === groupId);
-      console.log(node);
       labels.current = node.attribute;
       setNodeData({
-        ...nodeData,
         nodeId: groupId,
         fileName: node.fileName,
         attribute: labels.current ? labels.current : [],
@@ -50,8 +57,7 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
         y: currentNode.attrs.y,
       });
     }
-    onUpdateNodeInfo(nodeData);
-  }, [currentNode, open]);
+  }, [currentNode, open, nodeInfo]);
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
@@ -115,10 +121,15 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
   };
 
   const handleDeleteLabel = (labelId) => {
-    setNodeData((prevData) => ({
-      ...prevData,
-      attribute: prevData.attribute.filter(label => label.id !== labelId),
-    }));
+    setNodeData((prevData) => {
+      const newAttributes = prevData.attribute.filter(label => label.labelId !== labelId);
+      const updatedNodeData = {
+        ...prevData,
+        attribute: newAttributes,
+      };
+      labels.current = updatedNodeData.attribute;
+      return updatedNodeData;
+    });
   
     setShowChipDelete(false);
   };
@@ -127,15 +138,15 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
     showChipDelete === labelId ? setShowChipDelete(false) : setShowChipDelete(labelId);
   };
 
-  const handleNodeInfoUpdate = (upadteNode) => {
+  const handleNodeInfoUpdate = (updateNode) => {
     setNodeData((prevData) => {
       const updatedNodeData = {
         ...prevData,
-        nodeId: upadteNode.nodeId !== undefined ? upadteNode.nodeId : prevData.nodeId,
-        fileName: upadteNode.fileName !== undefined ? upadteNode.fileName : prevData.fileName,
-        attribute: upadteNode.attribute !== undefined ? upadteNode.attribute : prevData.attribute,
-        x: upadteNode.x !== undefined ? upadteNode.x : prevData.x,
-        y: upadteNode.y !== undefined ? upadteNode.y : prevData.y,
+        nodeId: updateNode.nodeId !== undefined ? updateNode.nodeId : prevData.nodeId,
+        fileName: updateNode.fileName !== undefined ? updateNode.fileName : prevData.fileName,
+        attribute: updateNode.attribute !== undefined ? updateNode.attribute : prevData.attribute,
+        x: updateNode.x !== undefined ? updateNode.x : prevData.x,
+        y: updateNode.y !== undefined ? updateNode.y : prevData.y,
       };
       console.log(updatedNodeData);
       return updatedNodeData;
@@ -143,7 +154,7 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
   };
 
   return (
-    <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth='xs' fullWidth>
+    <Dialog open={dialogOpen} onClose={handleCloseDialog} aria-labelledby="node-dialog-title" maxWidth='xs' fullWidth>
       <Tabs value={value} onChange={handleTabChange} aria-label="tabs">
         <Tab label="一般設定" />
         <Tab label="標籤管理" />
@@ -176,11 +187,7 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
                 ) : (
                   <span style={{ fontSize: '1.5rem' }}>{nodeData.fileName}</span>
                 )}
-                {editTitle ? (
-                  <Button onClick={editTitle ? handleTitleSave : handleEditTitle}>
-                    {'Save'}
-                  </Button>
-                ) : (
+                {editTitle ? null : (
                   <IconButton onClick={editTitle ? handleTitleSave : handleEditTitle}>
                     <EditIcon />
                   </IconButton>
