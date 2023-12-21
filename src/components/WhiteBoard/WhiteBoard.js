@@ -1,5 +1,5 @@
 // WhiteBoard.js
-import React, { useState, useEffect, useRef, useId } from 'react';
+import React, { useState, useEffect, useRef, useId, useCallback } from 'react';
 import { Stage, Layer, Circle, Rect } from "react-konva";
 import { v4 as uuidv4 } from 'uuid';
 import Menu from '@mui/material/Menu';
@@ -8,6 +8,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { BackLayerRender } from "./BackLayerRender";
 import DrawExistingNode from "./DrawExistingNode.jsx";
 import NodeDialog from '../NodeDetailInfo/NodeDialog.js';
+import { useLabels } from '../LabelContext/LabelContext.js';
 
 const width = window.innerWidth;
 const height = window.innerHeight;
@@ -27,7 +28,7 @@ function generateBackgroundLayer() {
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
+export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   const prevFileDrop = useRef(fileDrop);
   const [backgroundLayerStat, setBackgroundLayerStat] = useState(INITIAL_BAKEGROUND_STATE);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -46,6 +47,9 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
   const contextMenuCurrentShape = useRef();
   // handleNodeDialogOpen
   const [nodeDialogOpen, setNodeDialogOpen] = useState(false);
+  // save all lebels in the node
+  const [labelsToDialog, setLabelsToDialog] = useState([]);
+  const { labels, setLabels } = useLabels();
     
   const generateNodes = (nodeInfo, dropClientPosition) => {
     const fileCount = nodeInfo.length;
@@ -119,7 +123,6 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
     }
   };
 
-  // handle modify node in Dialog
   const handleDialogInfoChange = (updatedNode) => {
     const prevDialogNodeInfo = dialogNodeInfo.current;
 
@@ -143,6 +146,18 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
     }
   }, [fileDrop, position.x, position.y]);
 
+  useEffect(() => {
+    setNodeInfo(prevNodeInfo =>
+      prevNodeInfo.map(node => ({
+        ...node,
+        attribute: node.attribute.map(attr => {
+          const label = labels.find(l => l.labelId === attr.labelId);
+          return label ? { ...attr, ...label } : attr;
+        }),
+      }))
+    );
+  }, [labels]);
+  
   const handleDragStart = (e) => {
     e.cancelBubble = true;
     console.log('dragstart');
@@ -175,14 +190,15 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
     setPosition({ x: position.x, y: position.y });
     setRelPosToScreen(rel);
   };
-  
-  const handleContextMenuClose = () => {
+
+  const handleContextMenuClose = useCallback(() => {
     setContextMenu(null);
     contextMenuCurrentShape.current = null;
-  };
-
+    // 這裡是 handleContextMenuClose 的邏輯
+  }, [contextMenuCurrentShape]);
+  
   // 右鍵點擊展開Node選單
-  const handleContextMenu = (e) => {
+  const handleContextMenu = useCallback((e) => {
     e.evt.preventDefault();
     handleContextMenuClose();
     
@@ -196,17 +212,18 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
       });
       return;
     }
-  };
+  }, [contextMenuCurrentShape]);
 
-  // Context Menu => NodeDetailInfo
-  const handleNodeDetailInfo = () => {
-    setNodeDialogOpen(true);
-    handleContextMenuClose();
-  };
+  const handleNodeDetailInfo = useCallback(() => {
+      setNodeDialogOpen(true);
+      handleContextMenuClose();
+    // 這裡是 handleNodeDetailInfo 的邏輯
+  }, []); // 加入這個函數的依賴
 
-  const handleNodeDialogClose = () => {
+  const handleNodeDialogClose = useCallback(() => {
+    // 這裡是 handleNodeDialogClose 的邏輯
     setNodeDialogOpen(false);
-  };
+  }, []); // 加入這個函數的依賴
 
   return (
     <div>
@@ -256,6 +273,7 @@ export const WhiteBoard = ({fileDrop, toggleButton, dropClientPosition}) => {
       <NodeDialog
         nodeInfo={nodeInfo}
         currentNode={contextMenuCurrentShape.current}
+        // labelsAlreadyExist={labelsToDialog}
         open={nodeDialogOpen}
         handleClose={handleNodeDialogClose}
         onUpdateNodeInfo={handleDialogInfoChange}

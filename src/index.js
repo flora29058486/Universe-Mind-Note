@@ -12,7 +12,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { StyledEngineProvider } from '@mui/material/styles';
 import ToggleButtonsOnMainKonva from './components/MUI/ToggleButtonOnMainKonva/ToggleButtonOnMainKonva.jsx';
-import App from './App.jsx';
+import App from './App.js';
 
 // ReactDOM.createRoot(document.querySelector("#toggle-button")).render(
 //   // <React.StrictMode>

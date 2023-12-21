@@ -6,10 +6,9 @@ import { CompactPicker } from 'react-color';
 function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
   const [selectedLabels, setSelectedLabels] = useState([]);
   const [showCheckboxes, setShowCheckboxes] = useState(false);
-  const [labelEdits, setLabelEdits] = useState({});
   const [editingLabelId, setEditingLabelId] = useState(null); // 追踪哪個 label 正在被編輯
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');;
 
   const styles = {
     swatch: {
@@ -73,8 +72,13 @@ function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
   const colorChangeFinish = (labelId) => () => {
     setDisplayColorPicker(false);
     let label = labels.find(label => label.labelId === labelId);
-    label = { ...label, color: selectedColor };
-    onUpdateLabel(label);
+
+    if (selectedColor === '') {
+      onUpdateLabel(label);
+    } else {
+      label = { ...label, color: selectedColor };
+      onUpdateLabel(label);
+    }
   };
 
   return (
@@ -129,6 +133,11 @@ function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
                   onBlur={(e) => handleUpdateLabelName(label.labelId, e.target.value)}
                   fullWidth
                   defaultValue={label.labelName}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.target.blur();
+                    }
+                  }}
                   InputProps={{
                     endAdornment: (
                       <EditIcon sx={{ color: 'action.active' }} />

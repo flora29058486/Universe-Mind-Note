@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Divider, IconButton, TextField, Tabs, Tab, Box } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddNewLabel from './AddNewLabel.js';
-
+import { useLabels } from '../LabelContext/LabelContext.js';
 
 function getTextColorForBackground(backgroundColor) {
   // 将颜色转换为RGB值
@@ -15,10 +15,11 @@ function getTextColorForBackground(backgroundColor) {
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
   // 根据亮度返回合适的文字颜色
-  return brightness > 125 ? 'black' : 'white'; // 根据背景亮度，选择适合的文字颜色
+  return brightness > 125 ? 'black' : 'white';
 }
 
 const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo }) => {
+  const { setLabels } = useLabels();
   const [isInitialMount, setIsInitialMount] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(open);
   const [value, setValue] = React.useState(0);
@@ -114,10 +115,20 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
   };
 
   const handleAddLabel = (label) => {
-    setNodeData((prevData) => ({
+    // 更新節點數據
+    setNodeData(prevData => ({
       ...prevData,
       attribute: [...prevData.attribute, label],
     }));
+
+    // 同時更新全局標籤
+    setLabels(prevLabels => {
+      const labelExists = prevLabels.some(l => l.labelId === label.labelId);
+      if (!labelExists) {
+        return [...prevLabels, label];
+      }
+      return prevLabels;
+    });
   };
 
   const handleDeleteLabel = (labelId) => {
@@ -129,6 +140,15 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
       };
       labels.current = updatedNodeData.attribute;
       return updatedNodeData;
+    });
+
+    // 更新全局標籤，如果該標籤不再與任何節點相關聯
+    setLabels(prevLabels => {
+      const isLabelUsed = nodeData.some(node => node.attribute.some(attr => attr.labelId === labelId));
+      if (!isLabelUsed) {
+        return prevLabels.filter(label => label.labelId !== labelId);
+      }
+      return prevLabels;
     });
   
     setShowChipDelete(false);
@@ -197,7 +217,7 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
             <DialogContent>
             {labels.current && labels.current.length > 0 && (
               <>
-                <Divider />
+                <Divider variant="middle" />
                 {labels.current.map((label) => (
                   <div key={label.labelId} style={{ display: 'inline-block', marginRight: '0.25rem' , marginRight: '0.25rem', marginTop: '0.5rem' }}>
                     <Chip

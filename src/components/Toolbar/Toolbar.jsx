@@ -15,6 +15,9 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 
 import FileTreeView from './FileImport/FileTreeView.jsx';
+import LabelManager from './LabelManager/LabelManager.js';
+import { useLabels } from '../LabelContext/LabelContext.js';
+
 
 const useStyles = makeStyles({
   drawer: {
@@ -64,6 +67,7 @@ function Toolbar({onToolSelect}) {
   // const [isToolBarOpen, setToolBarOpen] = useState(false);
   // const [isTreeViewOpen, setTreeViewOpen] = useState(false);
   const [selectedButton, setSelectedButton] = useState('');
+  const { labels, addLabel, removeLabel, mergeLabels, updateLabel, searchLabelsByName } = useLabels()
 
   // const toggleTreeView = () => {
   //   setTreeViewOpen(!isTreeViewOpen);
@@ -176,6 +180,16 @@ function Toolbar({onToolSelect}) {
         <Grid item xs={9} md={9}>
           {selectedButton === 'Explorer' && (
             <FileTreeView selectedButton={selectedButton} />
+          )}
+          {selectedButton === 'Search' && (
+            <LabelManager
+              labels={labels}
+              onAddLabel={addLabel}
+              onRemoveLabel={removeLabel}
+              onMergeLabels={mergeLabels}
+              onUpdateLabel={updateLabel}
+              // onSearchLabels={searchLabelsByName}
+            />
           )}
         </Grid>
       </Grid>

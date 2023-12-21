@@ -81,8 +81,7 @@ const AddNewLabel = ({ onclose, addLabel }) => {
         {displayColorPicker ? (
           <div style={{ ...styles.popover, zIndex: '2' }}>
             <div style={styles.cover} onClick={() => setDisplayColorPicker(false)} />
-            <CompactPicker color={selectedColor} onChange={handleColorChange} 
-            />
+            <CompactPicker onChange={handleColorChange} />
           </div>
         ) : null}
         <TextField

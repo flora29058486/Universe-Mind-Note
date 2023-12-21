@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Tray, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
@@ -153,18 +153,25 @@ const createWindow = () => {
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    // backgroundColor: '#FF0000',
-    // webPreferences: {
-    //   preload: path.join(__dirname, 'preload.js')
-    // }
+    show: false,
+    width: 1920,
+    height: 1080,
+    // icon: `${__dirname}/dist/assets/imgs/logo.png`, // 使用绝对路径
+    // backgroundColor: 'blue',
+    backgroundMaterial: 'acrylic',
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       contextIsolation: true,
       // nodeIntegration: true,
     }
   });
+
+  // Remove the menu bar
+  mainWindow.setMenu(null);
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show()
+  })
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
