@@ -1,14 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Box, List, ListItem, Checkbox, ListItemText, ListItemIcon, Button, Paper, Divider, ListItemButton, Typography, TextField, IconButton } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { CompactPicker } from 'react-color';
 
-function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
+import { useLabels } from '../../Context/LabelContext.js';
+import { useNodes } from '../../Context/NodeContext.js';
+
+function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
+  const { addLabel, removeLabel } = useLabels();
+  const { nodes, setNodes } = useNodes();
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredLabels, setFilteredLabels] = useState(labels); // 过滤后的标签列表
   const [selectedLabels, setSelectedLabels] = useState([]);
   const [showCheckboxes, setShowCheckboxes] = useState(false);
   const [editingLabelId, setEditingLabelId] = useState(null); // 追踪哪個 label 正在被編輯
+  // normal color picker of existing label
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  const [selectedColor, setSelectedColor] = useState('');;
+  // color picker of new label
+  const [newLabelColor, setNewLabelColor] = useState(false);
+  const [selectedColor, setSelectedColor] = useState('');
 
   const styles = {
     swatch: {
@@ -23,6 +38,11 @@ function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
       position: 'absolute',
       zIndex: '2',
     },
+    popoverOfNewLabel: {
+      marginTop: '40px',
+      position: 'absolute',
+      zIndex: '2',
+    },
     cover: {
       position: 'fixed',
       top: '0px',
@@ -31,6 +51,24 @@ function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
       left: '0px',
     },
   };
+
+  useEffect(() => {
+    console.log(selectedLabels);
+  }, [selectedLabels]);
+
+  useEffect(() => {
+    if (searchTerm === '') {
+      setFilteredLabels(labels);
+    } else {
+      console.log(searchTerm);
+      const lowercasedFilter = searchTerm.toLowerCase();
+      const filteredLabels = labels.filter(label => 
+        label.labelName.toLowerCase().includes(lowercasedFilter)
+      );
+      console.log(filteredLabels);
+      setFilteredLabels(filteredLabels);
+    }
+  }, [searchTerm, labels]);
 
   const handleToggle = (labelId) => {
     console.log(labelId);
@@ -51,6 +89,20 @@ function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
 
   const handleMerge = () => {
     onMergeLabels(selectedLabels);
+    setSelectedLabels([]);
+    setShowCheckboxes(false);
+    setEditingLabelId(null);
+  };
+
+  const handleDelete = () => {
+    selectedLabels.forEach(labelId => {
+      removeLabel(labelId);
+      setNodes(prevNodes => 
+        prevNodes.map(node => 
+          ({ ...node, attribute: node.attribute.filter(label => label.labelId !== labelId) })
+        )
+      );
+    });
     setSelectedLabels([]);
     setShowCheckboxes(false);
     setEditingLabelId(null);
@@ -81,11 +133,46 @@ function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
     }
   };
 
+  const addNewLabelFromLabelManager = () => {
+    setNewLabelColor(false);
+
+    if (selectedColor === '') {
+      addLabel({ labelName: searchTerm, color: "#FCDC00"});
+      // onUpdateLabel(label);
+    } else {
+      // label = { ...label, color: selectedColor };
+      // onUpdateLabel(label);
+      addLabel({ labelName: searchTerm, color: selectedColor});
+    }
+  };
+
   return (
-    // <Paper style={{ padding: '20px' }}>
-    <Paper>
+    <Paper style={{ maxHeight: '1200px', overflowY: 'auto' }}>
+      <Box padding={2}>
+        <TextField
+          id="filled-search"
+          fullWidth
+          label="搜尋標籤"
+          type="search"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <SearchIcon sx={{ color: 'action.active' }} />
+            ),
+            sx: {
+              // // fontSize
+              // '.MuiInputBase-input': {
+              //   fontSize: '1.2rem', 
+              // },
+              borderRadius: '30px',
+              boxShadow: '0 2px 3px rgba(0, 0, 0, 0.15)',
+            },
+          }}
+        />
+      </Box>
       <List>
-        {labels.map((label, index) => (
+        {filteredLabels.map((label, index) => (
           <React.Fragment key={label.labelId}>
             {index > 0 && <Divider component="li" />}
             <ListItem secondaryAction={
@@ -115,20 +202,6 @@ function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
                     />
                   </div>
                 ) : null}
-                {/* <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-                  <TextField
-                  onChange={(e) => handleUpdateLabelName(label.labelId, e.target.value)}
-                  fullWidth
-                  defaultValue={label.labelName}
-                  InputProps={{
-                    endAdornment: (
-                      <EditIcon />
-                    ),
-                  }}
-                />
-                
-                <EditIcon sx={{ color: 'action.active', ml: 1, mb: 2 }} />
-                </Box> */}
                 <TextField
                   onBlur={(e) => handleUpdateLabelName(label.labelId, e.target.value)}
                   fullWidth
@@ -163,7 +236,34 @@ function LabelManager({ labels, onRemoveLabel, onMergeLabels, onUpdateLabel }) {
           </React.Fragment>
         ))}
       </List>
-      <Button onClick={handleMerge}>Merge Selected</Button>
+      {searchTerm !== '' && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-start', ml: 3 }}>
+          <Button onClick = {() => setNewLabelColor(!newLabelColor)}>
+            <LocalOfferIcon></LocalOfferIcon>
+            <span style={{ marginRight: '1rem' }}></span>
+            <Typography variant="body1">
+              新增標籤："{searchTerm}"
+            </Typography>
+          </Button>
+          {newLabelColor ? (
+            <div style={{ ...styles.popoverOfNewLabel, zIndex: '2' }}>
+              <div style={styles.cover} onClick={addNewLabelFromLabelManager} />
+              <CompactPicker color={selectedColor} onChange={handleColorChange} 
+              />
+            </div>
+          ) : null}
+        </Box>
+      )}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        <Button onClick={handleMerge} disabled>Merge Label</Button>
+        <Button 
+          onClick={handleDelete} 
+          disabled={selectedLabels.length === 0} 
+          variant="outlined"
+          sx={{ ml: 2 }}
+          startIcon={<DeleteIcon />}
+        >Delete Label</Button>
+      </Box>
     </Paper>
   );
 }

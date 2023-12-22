@@ -186,7 +186,7 @@ function Toolbar({onToolSelect}) {
             <LabelManager
               labels={labels}
               onAddLabel={addLabel}
-              onRemoveLabel={removeLabel}
+              // onRemoveLabel={removeLabel}
               onMergeLabels={mergeLabels}
               onUpdateLabel={updateLabel}
               // onSearchLabels={searchLabelsByName}

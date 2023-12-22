@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid'; // 引入用于生成唯一 ID 的库
+import { v4 as uuidv4 } from 'uuid';
 
 const LabelContext = createContext();
 
@@ -8,17 +8,12 @@ export const useLabels = () => useContext(LabelContext);
 export const LabelsProvider = ({ children }) => {
   const [labels, setLabels] = useState([]);
 
-  const addLabel = newLabel => {
-    // 首先检查新标签是否已存在
-    const isLabelExist = labels.some(label => label.labelId === newLabel.labelId);
-
-    if (!isLabelExist) {
-      // 如果标签不存在，将其添加到数组中
-      setLabels(prevLabels => [...prevLabels, { ...newLabel, labelId: uuidv4() }]);
-    }
+  const addLabel = (newLabel) => {
+    console.log(newLabel);
+    setLabels(prevLabels => [...prevLabels, { ...newLabel, labelId: uuidv4() }]);
   };
 
-  const removeLabel = labelId => {
+  const removeLabel = (labelId) => {
     setLabels(prevLabels => prevLabels.filter(label => label.labelId !== labelId));
   };
 
