@@ -8,7 +8,8 @@ import MenuItem from '@mui/material/MenuItem';
 import { BackLayerRender } from "./BackLayerRender";
 import DrawExistingNode from "./DrawExistingNode.jsx";
 import NodeDialog from '../NodeDetailInfo/NodeDialog.js';
-import { useLabels } from '../LabelContext/LabelContext.js';
+import { useNodes } from '../Context/NodeContext.js';
+import { useLabels } from '../Context/LabelContext.js';
 
 const width = window.innerWidth;
 const height = window.innerHeight;
@@ -50,14 +51,15 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   // save all lebels in the node
   const [labelsToDialog, setLabelsToDialog] = useState([]);
   const { labels, setLabels } = useLabels();
+  const { nodes, setNodes, addNode } = useNodes();
     
-  const generateNodes = (nodeInfo, dropClientPosition) => {
-    const fileCount = nodeInfo.length;
+  const generateNodes = (dropNodes, dropClientPosition) => {
+    const fileCount = dropNodes.length;
     const squareSize = Math.ceil(Math.sqrt(fileCount));
     const circleRadius = 60;
     const paddingNodeCreate = 10;
 
-    const NodesGenerate = nodeInfo.map((fileInfo, counter) => {
+    const NodesGenerate = dropNodes.map((fileInfo, counter) => {
       const nodeId = fileInfo.nodeId;
       const fileName = fileInfo.fileName;
       const startx = dropClientPosition.x - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate)) - screenLeftSidePixel;
@@ -74,8 +76,8 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
     return NodesGenerate;
   };
 
-  const updateNodeInfo = (nodeInfo) => {
-    const updatedNodeInit = nodeInfo.map(filePath => {
+  const updateNodeInfo = (dropNodes) => {
+    const updatedNodeInit = dropNodes.map(filePath => {
       const fileNameWithExtension = filePath.split('\\').pop();
       const fileExtension = fileNameWithExtension.split('.').pop();
       const fileName = fileNameWithExtension.replace('.' + fileExtension, '');
@@ -97,6 +99,7 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
     const NodesGenerate = generateNodes(updatedNodeInit, dropClientPosition);
     console.log(NodesGenerate);
     setDropNodeInfo(NodesGenerate);
+    addNode(NodesGenerate);
     setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...NodesGenerate]);
   };
 
@@ -118,6 +121,7 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
     const prevUpdatedNodes = updateNodeInfoRef.current;
 
     if (JSON.stringify(prevUpdatedNodes) !== JSON.stringify(updatedNodes)) {
+      setNodes(updatedNodes);
       setNodeInfo(updatedNodes);
       updateNodeInfoRef.current = updatedNodes;
     }
@@ -127,6 +131,16 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
     const prevDialogNodeInfo = dialogNodeInfo.current;
 
     if (JSON.stringify(prevDialogNodeInfo) !== JSON.stringify(updatedNode)) {
+
+      setNodes(nodes =>
+        nodes.map(node => {
+          if (node.nodeId === updatedNode.nodeId) {
+            return { ...node, fileName: updatedNode.fileName, x: updatedNode.x, y: updatedNode.y, attribute: updatedNode.attribute };
+          }
+          return node;
+        })
+      );
+
       setNodeInfo(nodes =>
         nodes.map(node => {
           if (node.nodeId === updatedNode.nodeId) {
@@ -147,6 +161,17 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   }, [fileDrop, position.x, position.y]);
 
   useEffect(() => {
+
+    setNodes(prevNodeInfo =>
+      prevNodeInfo.map(node => ({
+        ...node,
+        attribute: node.attribute.map(attr => {
+          const label = labels.find(l => l.labelId === attr.labelId);
+          return label ? { ...attr, ...label } : attr;
+        }),
+      }))
+    );
+
     setNodeInfo(prevNodeInfo =>
       prevNodeInfo.map(node => ({
         ...node,
@@ -170,6 +195,8 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
     const pos = e.currentTarget.getRelativePointerPosition();
     if (toggleButton === "create" && e.evt.button === 0) {
       const NodesGenerate = generateFolderNode(pos);
+
+      addNode(NodesGenerate);
       setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...NodesGenerate]);
     };
   }
@@ -271,7 +298,6 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
         <MenuItem onClick={handleContextMenuClose}>Email</MenuItem>
       </Menu>
       <NodeDialog
-        nodeInfo={nodeInfo}
         currentNode={contextMenuCurrentShape.current}
         // labelsAlreadyExist={labelsToDialog}
         open={nodeDialogOpen}

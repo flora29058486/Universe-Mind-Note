@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Divider, IconButton, TextField, Tabs, Tab, Box } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddNewLabel from './AddNewLabel.js';
-import { useLabels } from '../LabelContext/LabelContext.js';
+import { useNodes } from '../Context/NodeContext.js';
+import { useLabels } from '../Context/LabelContext.js';
 
 function getTextColorForBackground(backgroundColor) {
   // 将颜色转换为RGB值
@@ -18,7 +19,8 @@ function getTextColorForBackground(backgroundColor) {
   return brightness > 125 ? 'black' : 'white';
 }
 
-const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo }) => {
+const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
+  const { nodes, setNodes } = useNodes();
   const { setLabels } = useLabels();
   const [isInitialMount, setIsInitialMount] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(open);
@@ -39,6 +41,7 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
       setIsInitialMount(false);
     } else {
       // 当 nodeData 更新且不是首次渲染时，调用 onUpdateNodeInfo
+      // 未來改在這裡執行，不用傳出函數到WhiteBoard.js
       onUpdateNodeInfo(nodeData);
     }
   }, [nodeData, onUpdateNodeInfo]);
@@ -48,7 +51,7 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
   
     if (currentNode) {
       const groupId = currentNode.attrs.id;
-      const node = nodeInfo.find(node => node.nodeId === groupId);
+      const node = nodes.find(node => node.nodeId === groupId);
       labels.current = node.attribute;
       setNodeData({
         nodeId: groupId,
@@ -58,7 +61,7 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
         y: currentNode.attrs.y,
       });
     }
-  }, [currentNode, open, nodeInfo]);
+  }, [currentNode, open, nodes]);
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
@@ -144,8 +147,9 @@ const NodeDialog = ({ nodeInfo, currentNode, open, handleClose, onUpdateNodeInfo
 
     // 更新全局標籤，如果該標籤不再與任何節點相關聯
     setLabels(prevLabels => {
-      const isLabelUsed = nodeData.some(node => node.attribute.some(attr => attr.labelId === labelId));
-      if (!isLabelUsed) {
+      const isLabelUsed = nodes.some(node => node.attribute.some(attr => attr.labelId === labelId));
+      console.log(isLabelUsed);
+      if (isLabelUsed) {
         return prevLabels.filter(label => label.labelId !== labelId);
       }
       return prevLabels;

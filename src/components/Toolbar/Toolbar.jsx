@@ -8,6 +8,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import Tooltip from '@mui/material/Tooltip';
 import Paper from '@mui/material/Paper';
 import FolderIcon from '@mui/icons-material/Folder';
+import BookmarkOutlinedIcon from '@mui/icons-material/BookmarkOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import ExtensionIcon from '@mui/icons-material/Extension';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -16,7 +17,7 @@ import Grid from '@mui/material/Grid';
 
 import FileTreeView from './FileImport/FileTreeView.jsx';
 import LabelManager from './LabelManager/LabelManager.js';
-import { useLabels } from '../LabelContext/LabelContext.js';
+import { useLabels } from '../Context/LabelContext.js';
 
 
 const useStyles = makeStyles({
@@ -123,19 +124,19 @@ function Toolbar({onToolSelect}) {
                   </Tooltip>
               </ListItemButton>
               <ListItemButton
-                onClick={() => handleButtonClick('Search')}
-                selected={selectedButton === 'Search'}
+                onClick={() => handleButtonClick('Label')}
+                selected={selectedButton === 'Label'}
                 sx={{
                   minHeight: 72,
                   maxWidth: 72,
                   justifyContent: open ? 'initial' : 'center',
                   px: 1,
-                  borderLeft: selectedButton === 'Search' ? '2px solid black' : '2px solid transparent',
+                  borderLeft: selectedButton === 'Label' ? '2px solid black' : '2px solid transparent',
                 }}
               >
-                <Tooltip title="Search" placement="right" arrow>
+                <Tooltip title="Label" placement="right" arrow>
                   <ListItemIcon sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <SearchIcon fontSize='large' sx={{ color: selectedButton === 'Search' ? 'black' : '' }} />
+                    <BookmarkOutlinedIcon fontSize='large' sx={{ color: selectedButton === 'Label' ? 'black' : '' }} />
                   </ListItemIcon>
                 </Tooltip>
               </ListItemButton>
@@ -181,7 +182,7 @@ function Toolbar({onToolSelect}) {
           {selectedButton === 'Explorer' && (
             <FileTreeView selectedButton={selectedButton} />
           )}
-          {selectedButton === 'Search' && (
+          {selectedButton === 'Label' && (
             <LabelManager
               labels={labels}
               onAddLabel={addLabel}

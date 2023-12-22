@@ -7,7 +7,8 @@ import MainKonva from './components/MainKonva/MainKonva.js';
 import './App.css';
 // import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
-import { LabelsProvider } from './components/LabelContext/LabelContext.js'; 
+import { LabelsProvider } from './components/Context/LabelContext.js'; 
+import { NodeProvider } from './components/Context/NodeContext.js';;
 
 
 export default function App() {
@@ -49,7 +50,7 @@ export default function App() {
     // 讓檔案可以放在裡面
     e.preventDefault();
     setDropClientPosition({ x: e.clientX, y: e.clientY });
-    
+
     const filesJSON = e.dataTransfer.getData('dragFiles');
     const files = JSON.parse(filesJSON);
     setFileDrag(files);
@@ -57,6 +58,7 @@ export default function App() {
 
   return (
     <LabelsProvider>
+    <NodeProvider>
       <Grid container>
         {/* 左邊的 Grid */}
         <Grid item xs={toolSelect ? 4 : 1} md={toolSelect ? 4 : 1}>
@@ -79,6 +81,7 @@ export default function App() {
           </div>
         </Grid>
       </Grid>
+    </NodeProvider>
     </LabelsProvider>
   );
 }
