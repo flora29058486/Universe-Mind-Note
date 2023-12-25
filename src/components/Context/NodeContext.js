@@ -10,7 +10,6 @@ export const NodeProvider = ({ children }) => {
   const { labels } = useLabels();
 
   const addNode = (node) => {
-    console.log("Adding node:", node);
     setNodes(prevNodes => [...prevNodes, ...node]);
   };
 

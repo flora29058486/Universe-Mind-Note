@@ -7,12 +7,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import { styled } from '@mui/material/styles';
-import { useDrag } from 'react-dnd';
-import { NativeTypes } from 'react-dnd-html5-backend';
 import FileDragToKonva from './FileDragToKonva.jsx';
-import IconButton from '@mui/material/IconButton';
-import Chip from '@mui/material/Chip';
 
 const useStyles = makeStyles({
   treeview: {
@@ -47,7 +42,6 @@ export default function FileTreeView() {
   const [selectedNode, setSelectedNode] = useState([]);
   const [fileStructure, setFileStructure] = useState();
   const [folderPaths, setFolderPaths] = useState([]);
-  const [dragEnabled, setDragEnabled] = useState(true);
   const [dragFiles, setDragFiles] = useState();
 
   useEffect(() => {
@@ -56,30 +50,31 @@ export default function FileTreeView() {
 
   // Handle node select
   const handleNodeSelect = (event, nodeId) => {
+    console.log(selectedNode);
     setSelectedNode(nodeId);
   };
 
-  const handleMouseDownOnSelectNode = (event, node) => {
+  const handleMouseDownOnSelectNode = useCallback((event, node) => {
     // prevent default behavior (render to top folder)
     event.stopPropagation();
 
+    event.dataTransfer.setData("isFileFromTreeView", true);
+
     const isNodeSelected = selectedNode.includes(node.id);
     const filesToDrag = isNodeSelected ? selectedNode : [node.id];
-    console.log(filesToDrag);
     setDragFiles(filesToDrag);
 
     const filesJSON = JSON.stringify(filesToDrag);
     event.dataTransfer.setData("dragFiles", filesJSON);
 
-    // <FileDragToKonva files={filesToDrag} />;
-  };
+  }, [selectedNode, setDragFiles]);
 
-  const handleDrop = (event) => {
-    event.stopPropagation();  
-    // event.preventDefault();
-    console.log(dragFiles);
-    // setDragFiles(files);
-  };
+  // const handleDrop = (event) => {
+  //   event.stopPropagation();  
+  //   // event.preventDefault();
+  //   console.log(dragFiles);
+  //   // setDragFiles(files);
+  // };
 
   // Handle refresh click
   const handleRefresh = async () => {

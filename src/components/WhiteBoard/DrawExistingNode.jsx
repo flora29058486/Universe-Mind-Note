@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Circle, Layer, Text, Group } from 'react-konva';
 
-const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
+const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo, onFolderOpen }) => {
   const [nodes, setNodes] = useState([]);
   const [previousShape, setPreviousShape] = useState(null);
   const [nodeMoving, setNodeMoving] = useState(null);
@@ -187,7 +187,9 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo}) => {
       } catch (error) {
         console.error('Error opening file:', error);
       }
-    } else {
+    } else if (node.nodeType === 'folder') {
+      // Open the folder
+      onFolderOpen(node);
       return;
     }
   };

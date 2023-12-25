@@ -80,7 +80,6 @@ async function handleOpenFolder() {
     try {
       // const files = await fs.promises.readdir(absolutePath);
       const files = traverseFolder(absolutePath);
-      console.log(absolutePath);
       return files;
     } catch (err) {
       console.error('Error reading folder:', err);
@@ -104,7 +103,6 @@ const handleOpenFile = async (event, filePathToOpen) => {
         console.error('Error opening the file:', err);
         return;
       }
-      console.log('File opened successfully');
     });
   } else if (platform === 'darwin') {
     // macOS 使用 open 命令打開檔案
@@ -113,7 +111,6 @@ const handleOpenFile = async (event, filePathToOpen) => {
         console.error('Error opening the file:', err);
         return;
       }
-      console.log('File opened successfully');
     });
   } else if (platform === 'linux') {
     // Linux 使用 xdg-open 命令打開檔案
@@ -122,7 +119,6 @@ const handleOpenFile = async (event, filePathToOpen) => {
         console.error('Error opening the file:', err);
         return;
       }
-      console.log('File opened successfully');
     });
   } else {
     console.error('Unsupported platform');
@@ -130,7 +126,6 @@ const handleOpenFile = async (event, filePathToOpen) => {
 }
 
 const handleLoadFileIcon = async (_, filePath) => {
-  console.log(filePath);
   try {
     // 進行相應的操作，這裡可以是讀取文件的圖示等
     const icon = await app.getFileIcon(filePath, { size: 'normal' });

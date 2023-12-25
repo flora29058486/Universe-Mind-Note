@@ -51,9 +51,16 @@ export default function App() {
     e.preventDefault();
     setDropClientPosition({ x: e.clientX, y: e.clientY });
 
-    const filesJSON = e.dataTransfer.getData('dragFiles');
-    const files = JSON.parse(filesJSON);
-    setFileDrag(files);
+    const isFileFromTreeView = e.dataTransfer.getData('isFileFromTreeView') ? e.dataTransfer.getData('isFileFromTreeView') : false;
+
+    if (isFileFromTreeView) {
+      const filesJSON = e.dataTransfer.getData('dragFiles');
+      const files = JSON.parse(filesJSON);
+      setFileDrag(files);
+      e.dataTransfer.clearData(['isFileFromTreeView']);
+    } else {
+      return;
+    }
   }, [dropClientPosition]);
 
   return (

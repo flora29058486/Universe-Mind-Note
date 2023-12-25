@@ -85,7 +85,7 @@ function Toolbar({onToolSelect}) {
   };
 
   useEffect(() => {
-    console.log(Boolean(selectedButton));
+    
   }, [selectedButton]);
 
   return (

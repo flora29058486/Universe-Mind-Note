@@ -8,6 +8,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { BackLayerRender } from "./BackLayerRender";
 import DrawExistingNode from "./DrawExistingNode.jsx";
 import NodeDialog from '../NodeDetailInfo/NodeDialog.js';
+import FolderDialog from './FolderDialog/FolderDialog.js';
 import { useNodes } from '../Context/NodeContext.js';
 import { useLabels } from '../Context/LabelContext.js';
 
@@ -50,6 +51,11 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   const [nodeDialogOpen, setNodeDialogOpen] = useState(false);
   // save all lebels in the node
   const [labelsToDialog, setLabelsToDialog] = useState([]);
+  // FolderDialog open
+  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
+  const [folderDialogNode, setFolderDialogNode] = useState(null);
+  
+  // context
   const { labels, setLabels } = useLabels();
   const { nodes, setNodes, addNode } = useNodes();
     
@@ -77,20 +83,19 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   };
 
   const updateNodeInfo = (dropNodes) => {
-    const updatedNodeInit = dropNodes.map(filePath => {
-      const fileNameWithExtension = filePath.split('\\').pop();
+    const updatedNodeInit = dropNodes.map(filepath => {
+      const fileNameWithExtension = filepath.split('\\').pop();
       const fileExtension = fileNameWithExtension.split('.').pop();
       const fileName = fileNameWithExtension.replace('.' + fileExtension, '');
 
       return {
         nodeId: uuidv4(),
         fileName: fileName,
-        filepath: filePath,
+        filepath: filepath,
         nodeType: 'normal',
-        nodeIcon: fileExtension,
+        nodeIcon: ((fileExtension !== fileName) ? fileExtension : ''),
         attribute: [],
         childNode: [],
-        filePath: null,
         x: null,
         y: null,
       };
@@ -244,13 +249,21 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   const handleNodeDetailInfo = useCallback(() => {
       setNodeDialogOpen(true);
       handleContextMenuClose();
-    // 這裡是 handleNodeDetailInfo 的邏輯
-  }, []); // 加入這個函數的依賴
+  }, []); 
 
   const handleNodeDialogClose = useCallback(() => {
-    // 這裡是 handleNodeDialogClose 的邏輯
     setNodeDialogOpen(false);
-  }, []); // 加入這個函數的依賴
+  }, []);
+
+  const handleFolderDialogOpen = useCallback((node) => {
+    setFolderDialogOpen(true);
+    setFolderDialogNode(node);
+  }, []);
+
+  const handleFolderDialogClose = useCallback(() => {
+    setFolderDialogOpen(false);
+    setFolderDialogNode(null);
+  }, []);
 
   return (
     <div>
@@ -276,6 +289,7 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
           // draw node to whiteBoard
           onUpdateNodeInfo={handleFileIntoFolder}
           circleRadius={60}
+          onFolderOpen={handleFolderDialogOpen}
         />
       </Stage>
       <Menu
@@ -304,6 +318,13 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
         handleClose={handleNodeDialogClose}
         onUpdateNodeInfo={handleDialogInfoChange}
       />
+      {folderDialogNode &&(
+        <FolderDialog 
+          folderDialogOpen={folderDialogOpen} 
+          onFolderDialogClose={handleFolderDialogClose} 
+          folderNode={folderDialogNode}
+        />
+      )}
     </div>
     
   );
