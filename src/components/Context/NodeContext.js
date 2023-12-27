@@ -7,13 +7,42 @@ export const useNodes = () => useContext(NodeContext);
 
 export const NodeProvider = ({ children }) => {
   const [nodes, setNodes] = useState([]);
-  const { labels } = useLabels();
+  const { labels, removeLabel } = useLabels();
 
   const addNode = (node) => {
+    console.log(node);
     setNodes(prevNodes => [...prevNodes, ...node]);
   };
 
   const deleteNode = (nodeId) => {
+    const nodeToDelete = nodes.find(node => node.nodeId === nodeId);
+    if (!nodeToDelete) {
+      console.log("Node not found:", nodeId);
+      return;
+    }
+    
+    // 所有要刪除的標籤
+    const labelsToDelete = new Set(nodeToDelete.attribute.map(attr => attr.labelId));
+    console.log(labelsToDelete);
+
+    // 歷遍所有節點，過濾需要刪除的標籤
+    nodes.forEach(node => {
+      if (node.nodeId !== nodeId) {
+        node.attribute.forEach(attr => {
+          if (labelsToDelete.has(attr.labelId)) {
+            labelsToDelete.delete(attr.labelId);
+          }
+        });
+      }
+    });
+
+    // 處理需要刪除的標籤
+    labelsToDelete.forEach(labelId => {
+      console.log("Deleting label:", labelId);
+      removeLabel(labelId);
+    });
+
+    // 刪除節點
     setNodes(prevNodes => prevNodes.filter(node => node.nodeId !== nodeId));
   };
 

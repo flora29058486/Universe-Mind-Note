@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { TreeItem, TreeView } from '@mui/x-tree-view';
 import FolderIcon from '@mui/icons-material/Folder';
 import { makeStyles } from '@mui/styles';
+import { Paper } from '@mui/material';
 import DescriptionIcon from '@mui/icons-material/Description';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
@@ -11,12 +12,11 @@ import FileDragToKonva from './FileDragToKonva.jsx';
 
 const useStyles = makeStyles({
   treeview: {
-    marginLeft: '-20px',
-    height: '80vh', /* 設置最大高度 */
+    height: '100%', /* 設置最大高度 */
     flexGrow: 1,
   },
   fileListContainer: {
-    height: '80vh', /* 設置最大高度 */
+    height: 'calc(95vh - 24px)', /* 設置最大高度 */
     overflowY: 'auto', /* 啟用垂直滾動條 */
     overflowX: 'hidden', /* 啟用水平滾動條 */
     "&::-webkit-scrollbar": {
@@ -128,25 +128,26 @@ export default function FileTreeView() {
   };
 
   return (
-    <div className={classes.treeview}>
-      {dragFiles && <FileDragToKonva files={dragFiles} />}
-      <RefreshIcon onClick={handleRefresh} />
-      <CreateNewFolderIcon onClick={handleFolderImport}/>
-      <div className={classes.fileListContainer}>
-        <TreeView 
-          multiSelect 
-          defaultCollapseIcon={<ExpandMoreIcon />}
-          defaultExpandIcon={<ChevronRightIcon />}
-          aria-label="multi-select"
-          // defaultParentIcon={<FolderIcon />}
-          selected={selectedNode} 
-          onNodeSelect={handleNodeSelect}
-        >
-          {fileStructure && renderTree(fileStructure)}
-          {/* Render tree structure */}
-        </TreeView>
-      </div>
-      {/* Display selected files */}
-    </div>
+    // <div className={classes.treeview}>
+      <Paper className={classes.treeview}>
+        {dragFiles && <FileDragToKonva files={dragFiles} />}
+        <RefreshIcon onClick={handleRefresh} />
+        <CreateNewFolderIcon onClick={handleFolderImport}/>
+        <div className={classes.fileListContainer}>
+          <TreeView 
+            multiSelect 
+            defaultCollapseIcon={<ExpandMoreIcon />}
+            defaultExpandIcon={<ChevronRightIcon />}
+            aria-label="multi-select"
+            // defaultParentIcon={<FolderIcon />}
+            selected={selectedNode} 
+            onNodeSelect={handleNodeSelect}
+          >
+            {fileStructure && renderTree(fileStructure)}
+            {/* Render tree structure */}
+          </TreeView>
+        </div>
+      </Paper>
+    // </div>
   );
 };

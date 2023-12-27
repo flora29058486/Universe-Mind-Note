@@ -6,11 +6,63 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { CompactPicker } from 'react-color';
+import { makeStyles } from '@material-ui/core/styles';
 
 import { useLabels } from '../../Context/LabelContext.js';
 import { useNodes } from '../../Context/NodeContext.js';
 
+const useStyles = makeStyles({
+  paper: {
+    height: '100%', /* 設置最大高度 */
+    flexGrow: 1,
+  },
+  labelList: {
+    height: 'calc(100vh - 145px)', /* 設置最大高度 */
+    overflowY: 'auto', /* 啟用垂直滾動條 */
+    overflowX: 'hidden', /* 啟用水平滾動條 */
+    "&::-webkit-scrollbar": {
+      width: '10px', /* 滾動條寬度 */
+    },
+    scrollbarWidth: 'thin', /* 滾動條寬度（Firefox支援） */
+    "&::-webkit-scrollbar-thumb": {
+      backgroundColor: '#888', /* 滾動條顏色 */
+      borderRadius: '6px', /* 圓角 */
+      transition: 'background-color 1.2s ease', /* 顏色漸變動畫 */
+    },
+    "&:hover::-webkit-scrollbar-thumb": {
+      backgroundColor: '#555', /* 滑鼠懸停時滾動條顏色改變 */
+    },
+    "&::-webkit-scrollbar-track": {
+      backgroundColor: 'transparent', /* 滾動條背景顏色 */
+    },
+  },
+  popover: {
+    marginTop: '160px',
+    position: 'absolute',
+    zIndex: '2',
+  },
+  popoverOfNewLabel: {
+    // position: 'absolute',
+    zIndex: '2',
+  },
+  cover: {
+    position: 'fixed',
+    top: '0px',
+    right: '0px',
+    bottom: '0px',
+    left: '0px',
+  },
+  swatch: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '4px',
+    backgroundColor: '#fff', // 初始化為白色或其他預設顏色
+    cursor: 'pointer',
+  },
+});
+
 function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
+  const classes = useStyles();
   const { addLabel, removeLabel } = useLabels();
   const { nodes, setNodes } = useNodes();
 
@@ -24,32 +76,19 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
   // color picker of new label
   const [newLabelColor, setNewLabelColor] = useState(false);
   const [selectedColor, setSelectedColor] = useState('');
+  const [popoverStyle, setPopoverStyle] = useState({marginTop: '40px'});
 
-  const styles = {
-    swatch: {
-      width: '50px',
-      height: '50px',
-      borderRadius: '4px',
-      backgroundColor: selectedColor,
-      cursor: 'pointer',
-    },
-    popover: {
-      marginTop: '160px',
-      position: 'absolute',
-      zIndex: '2',
-    },
-    popoverOfNewLabel: {
-      marginTop: '40px',
-      position: 'absolute',
-      zIndex: '2',
-    },
-    cover: {
-      position: 'fixed',
-      top: '0px',
-      right: '0px',
-      bottom: '0px',
-      left: '0px',
-    },
+  const updatePopoverStyle = (event) => {
+    setNewLabelColor(!newLabelColor);
+    const elementRect = event.currentTarget.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - elementRect.bottom;
+  
+    if (spaceBelow < 300) {
+      setPopoverStyle({ marginTop: '-130px' });
+      console.log("spaceBelow")
+    } else {
+      setPopoverStyle({ marginTop: '10px' });
+    }
   };
 
   useEffect(() => {
@@ -147,7 +186,7 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
   };
 
   return (
-    <Paper style={{ maxHeight: '1200px', overflowY: 'auto' }}>
+    <Paper className={classes.paper}>
       <Box padding={2}>
         <TextField
           id="filled-search"
@@ -171,89 +210,91 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
           }}
         />
       </Box>
-      <List>
-        {filteredLabels.map((label, index) => (
-          <React.Fragment key={label.labelId}>
-            {index > 0 && <Divider component="li" />}
-            <ListItem secondaryAction={
-              showCheckboxes ? (
-                <Checkbox
-                  edge="end"
-                  onChange={() => handleToggle(label.labelId)}
-                  checked={selectedLabels.indexOf(label.labelId) !== -1}
+      <div className={classes.labelList}>
+        <List>
+          {filteredLabels.map((label, index) => (
+            <React.Fragment key={label.labelId}>
+              {index > 0 && <Divider component="li" />}
+              <ListItem secondaryAction={
+                showCheckboxes ? (
+                  <Checkbox
+                    edge="end"
+                    onChange={() => handleToggle(label.labelId)}
+                    checked={selectedLabels.indexOf(label.labelId) !== -1}
+                  />
+                ) : null
+              }>
+              {editingLabelId === label.labelId ? (
+                // 如果當前標籤處於編輯模式
+                <React.Fragment>
+                  <IconButton onClick = {() => setDisplayColorPicker(!displayColorPicker)}>
+                    <div style={{
+                      width: '30px',
+                      height: '30px',
+                      backgroundColor: label.color,
+                      borderRadius: '50%',
+                    }} />
+                  </IconButton>
+                  {displayColorPicker ? (
+                    <div className={classes.popover}>
+                      <div className={classes.cover} onClick={colorChangeFinish(label.labelId)} />
+                      <CompactPicker color={selectedColor} onChange={handleColorChange} 
+                      />
+                    </div>
+                  ) : null}
+                  <TextField
+                    onBlur={(e) => handleUpdateLabelName(label.labelId, e.target.value)}
+                    fullWidth
+                    defaultValue={label.labelName}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.target.blur();
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <EditIcon sx={{ color: 'action.active' }} />
+                      ),
+                    }}
+                  />
+                </React.Fragment>
+              ) : (
+                // 正常模式
+                <ListItemButton onClick={() => handleToggle(label.labelId)}>
+                  <ListItemIcon>
+                    <div style={{
+                      width: '16px',
+                      height: '16px',
+                      backgroundColor: label.color,
+                      borderRadius: '50%'
+                    }} />
+                  </ListItemIcon>
+                  <ListItemText primary={<Typography variant="body1">{label.labelName}</Typography>} />
+                </ListItemButton>
+              )}
+              </ListItem>
+            </React.Fragment>
+          ))}
+        </List>
+        {searchTerm !== '' && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', ml: 3, pb: 3 }}>
+            <Button onClick = {(e) => updatePopoverStyle(e)} sx={{ alignSelf: 'flex-start' }}>
+              <LocalOfferIcon></LocalOfferIcon>
+              <span style={{ marginRight: '1rem' }}></span>
+              <Typography variant="body1">
+                新增標籤："{searchTerm}"
+              </Typography>
+            </Button>
+            {newLabelColor ? (
+              <div className={classes.popoverOfNewLabel} style={{ ...popoverStyle }}>
+                <div className={classes.cover} onClick={addNewLabelFromLabelManager} />
+                <CompactPicker color={selectedColor} onChange={handleColorChange} 
                 />
-              ) : null
-            }>
-            {editingLabelId === label.labelId ? (
-              // 如果當前標籤處於編輯模式
-              <React.Fragment>
-                <IconButton onClick = {() => setDisplayColorPicker(!displayColorPicker)}>
-                  <div style={{
-                    width: '30px',
-                    height: '30px',
-                    backgroundColor: label.color,
-                    borderRadius: '50%',
-                  }} />
-                </IconButton>
-                {displayColorPicker ? (
-                  <div style={{ ...styles.popover, zIndex: '2' }}>
-                    <div style={styles.cover} onClick={colorChangeFinish(label.labelId)} />
-                    <CompactPicker color={selectedColor} onChange={handleColorChange} 
-                    />
-                  </div>
-                ) : null}
-                <TextField
-                  onBlur={(e) => handleUpdateLabelName(label.labelId, e.target.value)}
-                  fullWidth
-                  defaultValue={label.labelName}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.target.blur();
-                    }
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <EditIcon sx={{ color: 'action.active' }} />
-                    ),
-                  }}
-                />
-              </React.Fragment>
-            ) : (
-              // 正常模式
-              <ListItemButton onClick={() => handleToggle(label.labelId)}>
-                <ListItemIcon>
-                  <div style={{
-                    width: '16px',
-                    height: '16px',
-                    backgroundColor: label.color,
-                    borderRadius: '50%'
-                  }} />
-                </ListItemIcon>
-                <ListItemText primary={<Typography variant="body1">{label.labelName}</Typography>} />
-              </ListItemButton>
-            )}
-            </ListItem>
-          </React.Fragment>
-        ))}
-      </List>
-      {searchTerm !== '' && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-start', ml: 3 }}>
-          <Button onClick = {() => setNewLabelColor(!newLabelColor)}>
-            <LocalOfferIcon></LocalOfferIcon>
-            <span style={{ marginRight: '1rem' }}></span>
-            <Typography variant="body1">
-              新增標籤："{searchTerm}"
-            </Typography>
-          </Button>
-          {newLabelColor ? (
-            <div style={{ ...styles.popoverOfNewLabel, zIndex: '2' }}>
-              <div style={styles.cover} onClick={addNewLabelFromLabelManager} />
-              <CompactPicker color={selectedColor} onChange={handleColorChange} 
-              />
-            </div>
-          ) : null}
-        </Box>
-      )}
+              </div>
+            ) : null}
+          </Box>
+        )}
+      </div>
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
         <Button onClick={handleMerge} disabled>Merge Label</Button>
         <Button 

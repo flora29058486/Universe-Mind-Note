@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Divider, IconButton, TextField, Tabs, Tab, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Divider, Grid, IconButton, TextField, Tabs, Tab, Box } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import AddNewLabel from './AddNewLabel.js';
 import { useNodes } from '../Context/NodeContext.js';
 import { useLabels } from '../Context/LabelContext.js';
+
+const MAX_LABELS_TO_SHOW = 6;
 
 function getTextColorForBackground(backgroundColor) {
   // 将颜色转换为RGB值
@@ -21,7 +22,7 @@ function getTextColorForBackground(backgroundColor) {
 
 const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
   const { nodes, setNodes } = useNodes();
-  const { setLabels } = useLabels();
+  const { labels, setLabels } = useLabels();
   const [isInitialMount, setIsInitialMount] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(open);
   const [value, setValue] = React.useState(0);
@@ -34,7 +35,17 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
     x: 0,
     y: 0,
   });
-  const labels = useRef(null);
+  const nodeLabels = useRef(null);
+
+
+  const recentLabels = labels.filter(label => 
+    nodeLabels.current === null || !nodeLabels.current.some(nodeLabel => nodeLabel.labelId === label.labelId)
+  )
+  // 倒序排序
+  const sortedRecentLabels = [...recentLabels].reverse();
+
+  // 限制要顯示的標籤數量
+  const labelsToShow = sortedRecentLabels.slice(0, MAX_LABELS_TO_SHOW);
 
   useEffect(() => {
     if (isInitialMount) {
@@ -52,11 +63,11 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
     if (currentNode) {
       const groupId = currentNode.attrs.id;
       const node = nodes.find(node => node.nodeId === groupId);
-      labels.current = node.attribute;
+      nodeLabels.current = node.attribute;
       setNodeData({
         nodeId: groupId,
         fileName: node.fileName,
-        attribute: labels.current ? labels.current : [],
+        attribute: nodeLabels.current ? nodeLabels.current : [],
         x: currentNode.attrs.x,
         y: currentNode.attrs.y,
       });
@@ -141,7 +152,7 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
         ...prevData,
         attribute: newAttributes,
       };
-      labels.current = updatedNodeData.attribute;
+      nodeLabels.current = updatedNodeData.attribute;
       return updatedNodeData;
     });
 
@@ -178,11 +189,17 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
   };
 
   return (
-    <Dialog open={dialogOpen} onClose={handleCloseDialog} aria-labelledby="node-dialog-title" maxWidth='xs' fullWidth>
+    <Dialog 
+      open={dialogOpen} 
+      onClose={handleCloseDialog} 
+      aria-labelledby="node-dialog-title" 
+      maxWidth='xs' fullWidth 
+      PaperProps={{ style: { overflowY: 'auto', maxHeight: '60vh', padding: '10px', minHeight: '480px', display: 'flex', flexDirection: 'column' } }}
+    >
       <Tabs value={value} onChange={handleTabChange} aria-label="tabs">
         <Tab label="一般設定" />
         <Tab label="標籤管理" />
-        <Tab label="新增標籤" />
+        {/* <Tab label="新增標籤" /> */}
       </Tabs>
       {/* <TabPanel value={value} index={0}>
         Content for Tab 1
@@ -193,7 +210,7 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
       <TabPanel value={value} index={2}>
         Content for Tab 3
       </TabPanel> */}
-      <Box>
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         {value === 0 && (
           <>
             <DialogTitle>
@@ -219,10 +236,10 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
               </div>
             </DialogTitle>
             <DialogContent>
-            {labels.current && labels.current.length > 0 && (
+            {nodeLabels.current && nodeLabels.current.length > 0 && (
               <>
-                <Divider variant="middle" />
-                {labels.current.map((label) => (
+                <Divider variant="middle" style={{ margin: '1rem 0' }} />
+                {nodeLabels.current.map((label) => (
                   <div key={label.labelId} style={{ display: 'inline-block', marginRight: '0.25rem' , marginRight: '0.25rem', marginTop: '0.5rem' }}>
                     <Chip
                       label={label.labelName}
@@ -241,13 +258,12 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
                       onClick={() => handleChipClick(label.labelId)}
                       onDelete={showChipDelete === label.labelId ? () => handleDeleteLabel(label.labelId) : undefined}
                     />
-                    
                   </div>
                 ))}
               </>
             )}
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ alignSelf: 'flex-end' }}>
               {/* <Button onClick={handleAddAttribute} variant="contained" startIcon={<BookmarkAddOutlinedIcon />}>
                 Add label
               </Button> */}
@@ -265,9 +281,9 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
             {/* Your content for Tab 1 */}
           </DialogTitle>
         )}
-        {value === 2 && (
+        {/* {value === 2 && (
           <AddNewLabel onclose={handleAddLabelClose} addLabel={handleAddLabel} />
-        )}
+        )} */}
       </Box>
     </Dialog>
   );

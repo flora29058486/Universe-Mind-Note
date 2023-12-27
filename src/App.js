@@ -8,7 +8,7 @@ import './App.css';
 // import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 import { LabelsProvider } from './components/Context/LabelContext.js'; 
-import { NodeProvider } from './components/Context/NodeContext.js';;
+import { NodeProvider } from './components/Context/NodeContext.js';
 
 
 export default function App() {
@@ -66,15 +66,26 @@ export default function App() {
   return (
     <LabelsProvider>
     <NodeProvider>
-      <Grid container>
+      <Grid container overflow={"hidden"} position={"relative"}>
         {/* 左邊的 Grid */}
-        <Grid item xs={toolSelect ? 4 : 1} md={toolSelect ? 4 : 1}>
-          {/* 呼叫你的組件 */}
+        
+        <ToggleButtonOnMainKonva onToggleButtonSelect={handleToggleButtonSelect}/>
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'flex-start', 
+            flexGrow: toolSelect ? 1 : 0, // 當 toolSelect 為 true 時，使用 flexGrow
+            width: toolSelect ? 'auto' : '72px' // 當 toolSelect 為 false 時，使用固定寬度
+          }} 
+          xs={toolSelect ? 3 : 1} 
+          md={toolSelect ? 3 : 1}
+        >
           <Toolbar onToolSelect={handleToolSelect}/>
-        </Grid>
-        {/* 右邊的內容 */}
-        <Grid item xs={toolSelect ? 8 : 11} md={toolSelect ? 8 : 11} position={"relative"}>
-          <ToggleButtonOnMainKonva onToggleButtonSelect={handleToggleButtonSelect}/>
+        </Box>
+        <Grid item 
+          xs={toolSelect ? 9 : 11} 
+          md={toolSelect ? 9 : 11}
+        >
           <div 
             id="konva-container"
             onDrop={handleDropOutside}

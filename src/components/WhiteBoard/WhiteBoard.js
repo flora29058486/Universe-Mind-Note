@@ -8,6 +8,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { BackLayerRender } from "./BackLayerRender";
 import DrawExistingNode from "./DrawExistingNode.jsx";
 import NodeDialog from '../NodeDetailInfo/NodeDialog.js';
+import AddLabelDialog from '../NodeDetailInfo/AddLabelDialog.js';
 import FolderDialog from './FolderDialog/FolderDialog.js';
 import { useNodes } from '../Context/NodeContext.js';
 import { useLabels } from '../Context/LabelContext.js';
@@ -35,8 +36,6 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   const [backgroundLayerStat, setBackgroundLayerStat] = useState(INITIAL_BAKEGROUND_STATE);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [relPosToScreen, setRelPosToScreen] = useState({ x: 0, y: 0 });
-  // 這是全部Node的資訊
-  const [nodeInfo, setNodeInfo] = useState([]);
   // 下面這個是拖進來時新增用
   const [dropnodeInfo, setDropNodeInfo] = useState([]);
   // NodeContextMenu
@@ -49,15 +48,19 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   const contextMenuCurrentShape = useRef();
   // handleNodeDialogOpen
   const [nodeDialogOpen, setNodeDialogOpen] = useState(false);
+  const [addLabelDialogOpen, setAddLabelDialogOpen] = useState(false);
   // save all lebels in the node
   const [labelsToDialog, setLabelsToDialog] = useState([]);
   // FolderDialog open
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [folderDialogNode, setFolderDialogNode] = useState(null);
+  // window size
+  const [stageSize, setStageSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const stageRef = useRef(null);
   
   // context
   const { labels, setLabels } = useLabels();
-  const { nodes, setNodes, addNode } = useNodes();
+  const { nodes, setNodes, addNode, deleteNode } = useNodes();
     
   const generateNodes = (dropNodes, dropClientPosition) => {
     const fileCount = dropNodes.length;
@@ -105,7 +108,6 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
     console.log(NodesGenerate);
     setDropNodeInfo(NodesGenerate);
     addNode(NodesGenerate);
-    setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...NodesGenerate]);
   };
 
   const generateFolderNode = (dropClientPosition) => {
@@ -127,12 +129,11 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
 
     if (JSON.stringify(prevUpdatedNodes) !== JSON.stringify(updatedNodes)) {
       setNodes(updatedNodes);
-      setNodeInfo(updatedNodes);
       updateNodeInfoRef.current = updatedNodes;
     }
   };
 
-  const handleDialogInfoChange = (updatedNode) => {
+  const handleDialogInfoChange = useCallback((updatedNode) => {
     const prevDialogNodeInfo = dialogNodeInfo.current;
 
     if (JSON.stringify(prevDialogNodeInfo) !== JSON.stringify(updatedNode)) {
@@ -146,17 +147,9 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
         })
       );
 
-      setNodeInfo(nodes =>
-        nodes.map(node => {
-          if (node.nodeId === updatedNode.nodeId) {
-            return { ...node, fileName: updatedNode.fileName, x: updatedNode.x, y: updatedNode.y, attribute: updatedNode.attribute };
-          }
-          return node;
-        })
-      );
       dialogNodeInfo.current = updatedNode;
     }
-  };
+  }, [setNodes]);
 
   useEffect(() => {
     if (prevFileDrop.current !== fileDrop) {
@@ -166,7 +159,6 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   }, [fileDrop, position.x, position.y]);
 
   useEffect(() => {
-
     setNodes(prevNodeInfo =>
       prevNodeInfo.map(node => ({
         ...node,
@@ -176,35 +168,41 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
         }),
       }))
     );
-
-    setNodeInfo(prevNodeInfo =>
-      prevNodeInfo.map(node => ({
-        ...node,
-        attribute: node.attribute.map(attr => {
-          const label = labels.find(l => l.labelId === attr.labelId);
-          return label ? { ...attr, ...label } : attr;
-        }),
-      }))
-    );
   }, [labels]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setStageSize({ width: window.innerWidth, height: window.innerHeight });
+      console.log(window.innerWidth);
+      console.log(stageRef.current);
+
+      if (stageRef.current) {
+        stageRef.current.draw();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, [stageSize]);
   
   const handleDragStart = (e) => {
     e.cancelBubble = true;
     console.log('dragstart');
   };
 
-  const handleClick = (e) => {
+  const handleClick = useCallback((e) => {
     e.cancelBubble = true;
     console.log(e.currentTarget.getPointerPosition());
     console.log(e.currentTarget.getRelativePointerPosition());
     const pos = e.currentTarget.getRelativePointerPosition();
+
     if (toggleButton === "create" && e.evt.button === 0) {
       const NodesGenerate = generateFolderNode(pos);
 
       addNode(NodesGenerate);
-      setNodeInfo(prevNodeInfo => [...prevNodeInfo, ...NodesGenerate]);
-    };
-  }
+    }
+  }, [toggleButton, generateFolderNode, addNode]);
 
   const handleDragEnd = (e) => {
     e.cancelBubble = true;
@@ -244,16 +242,35 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
       });
       return;
     }
-  }, [contextMenuCurrentShape]);
+  }, [contextMenuCurrentShape, handleContextMenuClose]);
 
   const handleNodeDetailInfo = useCallback(() => {
-      setNodeDialogOpen(true);
-      handleContextMenuClose();
-  }, []); 
+    setNodeDialogOpen(true);
+    handleContextMenuClose();
+  }, [handleContextMenuClose]); 
 
   const handleNodeDialogClose = useCallback(() => {
     setNodeDialogOpen(false);
+  }, [handleContextMenuClose]);
+
+  // 新增標籤
+  const handleAddLabelDetailInfo = useCallback(() => {
+    setAddLabelDialogOpen(true);
+    handleContextMenuClose();
+  }, [handleContextMenuClose]);
+
+  const handleAddLabelDialogClose = useCallback(() => {
+    setAddLabelDialogOpen(false);
   }, []);
+
+  // 刪除Node
+  const handleDeleteNode = useCallback(() => {
+    if (contextMenuCurrentShape.current) {
+      deleteNode(contextMenuCurrentShape.current.attrs.id);
+      handleContextMenuClose();
+    }
+  }, [deleteNode, handleContextMenuClose]);
+  
 
   const handleFolderDialogOpen = useCallback((node) => {
     setFolderDialogOpen(true);
@@ -268,8 +285,9 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   return (
     <div>
       <Stage
-        width={width} 
-        height={height}
+        width={stageSize.width} 
+        height={stageSize.height}
+        ref={stageRef}
         draggable={true}
         id='stage'
         onDragEnd={handleDragEnd}
@@ -285,7 +303,7 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
         />
         <DrawExistingNode
           // whiteBoard to draw node
-          nodeInfo={nodeInfo}
+          nodeInfo={nodes}
           // draw node to whiteBoard
           onUpdateNodeInfo={handleFileIntoFolder}
           circleRadius={60}
@@ -307,15 +325,21 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
         }}
       >
         <MenuItem onClick={handleNodeDetailInfo}>詳細資料</MenuItem>
-        <MenuItem onClick={handleContextMenuClose}>Print</MenuItem>
-        <MenuItem onClick={handleContextMenuClose}>Highlight</MenuItem>
-        <MenuItem onClick={handleContextMenuClose}>Email</MenuItem>
+        <MenuItem onClick={handleContextMenuClose}>標籤管理</MenuItem>
+        <MenuItem onClick={handleAddLabelDetailInfo}>新增標籤</MenuItem>
+        <MenuItem onClick={handleDeleteNode}>刪除</MenuItem>
       </Menu>
       <NodeDialog
         currentNode={contextMenuCurrentShape.current}
         // labelsAlreadyExist={labelsToDialog}
         open={nodeDialogOpen}
         handleClose={handleNodeDialogClose}
+        onUpdateNodeInfo={handleDialogInfoChange}
+      />
+      <AddLabelDialog
+        currentNode={contextMenuCurrentShape.current}
+        open={addLabelDialogOpen}
+        handleClose={handleAddLabelDialogClose}
         onUpdateNodeInfo={handleDialogInfoChange}
       />
       {folderDialogNode &&(

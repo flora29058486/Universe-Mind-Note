@@ -151,6 +151,8 @@ const createWindow = () => {
     show: false,
     width: 1920,
     height: 1080,
+    resizable: true,
+    fullscreenable: true,
     // icon: `${__dirname}/dist/assets/imgs/logo.png`, // 使用绝对路径
     // backgroundColor: 'blue',
     backgroundMaterial: 'acrylic',
