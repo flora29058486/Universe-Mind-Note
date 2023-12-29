@@ -14,7 +14,6 @@ import { useNodes } from '../../Context/NodeContext.js';
 const useStyles = makeStyles({
   paper: {
     height: '100%', /* 設置最大高度 */
-    flexGrow: 1,
   },
   labelList: {
     height: 'calc(100vh - 145px)', /* 設置最大高度 */

@@ -6,12 +6,14 @@ import Grid from '@mui/material/Grid';
 import MainKonva from './components/MainKonva/MainKonva.js';
 import './App.css';
 // import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
+import { SaveUserData } from './components/SaveUserData/SaveUserData.js';
 import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 import { LabelsProvider } from './components/Context/LabelContext.js'; 
 import { NodeProvider } from './components/Context/NodeContext.js';
 
 
 export default function App() {
+  const [konvaData, setKonvaData] = useState({});
   // 螢幕左方工具列
   const [toolSelect, setToolSelect] = useState('');
   // 畫布上的按鈕
@@ -22,7 +24,6 @@ export default function App() {
   // const [labels, setLabels] = useState([]);
   // const labelsFromWhiteBoard = useRef([]);
 
-  
   useEffect(() => {
 
   }, [fileDrag]);
@@ -66,38 +67,78 @@ export default function App() {
   return (
     <LabelsProvider>
     <NodeProvider>
-      <Grid container overflow={"hidden"} position={"relative"}>
-        {/* 左邊的 Grid */}
-        
+      <SaveUserData />
+      {/* <Grid container overflow={"hidden"} position={"relative"}> */}
+      <Grid container sx={{ overflow: 'hidden', position: 'relative', flexWrap: 'nowrap' }}>
         <ToggleButtonOnMainKonva onToggleButtonSelect={handleToggleButtonSelect}/>
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'flex-start', 
-            flexGrow: toolSelect ? 1 : 0, // 當 toolSelect 為 true 時，使用 flexGrow
-            width: toolSelect ? 'auto' : '72px' // 當 toolSelect 為 false 時，使用固定寬度
-          }} 
-          xs={toolSelect ? 3 : 1} 
-          md={toolSelect ? 3 : 1}
-        >
-          <Toolbar onToolSelect={handleToolSelect}/>
-        </Box>
-        <Grid item 
-          xs={toolSelect ? 9 : 11} 
-          md={toolSelect ? 9 : 11}
-        >
-          <div 
-            id="konva-container"
-            onDrop={handleDropOutside}
-            onDragOver={(e) => e.preventDefault()}
-          >
-            <WhiteBoard
-              fileDrop={fileDrag}
-              toggleButton={toggleButton}
-              dropClientPosition={dropClientPosition}
-            />
-          </div>
-        </Grid>
+        {/* 左邊的 Grid */}
+        {
+          toolSelect
+            ? (
+              // 當 toolSelect 為 true，使用 sx 屬性動態設定樣式
+              <Grid item
+                sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'flex-start',
+                }} 
+                xs={toolSelect ? 3 : 1}
+              >
+                <Toolbar onToolSelect={handleToolSelect}/>
+              </Grid>
+            )
+            : (
+              // 當 toolSelect 為 false，使用固定的像素值
+              <Grid item
+                sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'flex-start',
+                  width: '72px'
+                }}
+              >
+              <Toolbar onToolSelect={handleToolSelect}/>
+            </Grid>
+            )
+        }
+        {/* 右邊的 Grid */}
+        {
+          toolSelect
+            ? (
+              // 當 toolSelect 為 true，使用 sx 屬性動態設定樣式
+              <Grid item
+                sx={{
+                  height: '100vh',
+                  flexGrow: 1,
+                }}
+                xs={toolSelect ? 9 : 11}
+              >
+                <div id="konva-container" onDrop={handleDropOutside} onDragOver={(e) => e.preventDefault()}>
+                  <WhiteBoard
+                    fileDrop={fileDrag}
+                    toggleButton={toggleButton}
+                    dropClientPosition={dropClientPosition}
+                  />
+                </div>
+              </Grid>
+            )
+            : (
+              // 當 toolSelect 為 false，使用固定的像素值
+              <Grid item
+                sx={{
+                  height: '100vh',
+                  maxWidth: 'calc(100% - 72px)',
+                  flexGrow: 1,
+                }}
+              >
+                <div id="konva-container" onDrop={handleDropOutside} onDragOver={(e) => e.preventDefault()}>
+                  <WhiteBoard
+                    fileDrop={fileDrag}
+                    toggleButton={toggleButton}
+                    dropClientPosition={dropClientPosition}
+                  />
+                </div>
+              </Grid>
+            )
+        }  
       </Grid>
     </NodeProvider>
     </LabelsProvider>

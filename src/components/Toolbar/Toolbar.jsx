@@ -22,7 +22,8 @@ import { useLabels } from '../Context/LabelContext.js';
 
 const useStyles = makeStyles({
   drawer: {
-    width: '72px',
+    // width: '72px',
+    flexGrow: 1,
     flexShrink: 0,
     // '& .MuiDrawer-paper': {
     //   width: '72px',
@@ -30,7 +31,7 @@ const useStyles = makeStyles({
     // },
   },
   drawerExpanded: {
-    width: '500px', // 或是其他你想要的寬度
+    // width: '500px', // 或是其他你想要的寬度
     flexShrink: 0,
     flexGrow: 1,
     // '& .MuiDrawer-paper': {
@@ -93,17 +94,17 @@ function Toolbar({onToolSelect}) {
     // <ThemeProvider theme={componentTheme}>
     <Grid
       container
-      direction="row"
       justifyContent="flex-start"
+      wrap='nowrap'
       // alignItems="stretch"
       spacing={0}
     >
       {/* <Grid item xs={selectedButton !== '' ? 3 : 12} md={selectedButton !== '' ? 3 : 12} sx={{ height: '100vh' }}> */}
-      <Grid item sx={{ height: '100vh', width: '72px' }}>
+      <Grid item sx={{ height: '100vh', width: '72px'}}>
         <Drawer
           open={true} 
-          variant="permanent" 
-          anchor="left" 
+          variant="permanent"
+          anchor="left"
           className={`${selectedButton ? classes.drawerExpanded : classes.drawer }`}
         >
           <List>
@@ -180,7 +181,7 @@ function Toolbar({onToolSelect}) {
         </Drawer>
       </Grid>
       {/* <Grid item xs={9} md={9}> */}
-      <Grid item sx={{ height: '100vh', flexGrow: '1' }}>
+      <Grid item sx={{ height: '100vh', maxWidth: 'calc(100% - 72px)', flexShrink: 1, flexGrow: 1 }}>
         {selectedButton === 'Explorer' && (
           <FileTreeView selectedButton={selectedButton} />
         )}

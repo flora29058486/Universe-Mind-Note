@@ -13,12 +13,11 @@ import FileDragToKonva from './FileDragToKonva.jsx';
 const useStyles = makeStyles({
   treeview: {
     height: '100%', /* 設置最大高度 */
-    flexGrow: 1,
   },
   fileListContainer: {
-    height: 'calc(95vh - 24px)', /* 設置最大高度 */
+    height: 'calc(98vh - 24px)', /* 設置最大高度 */
     overflowY: 'auto', /* 啟用垂直滾動條 */
-    overflowX: 'hidden', /* 啟用水平滾動條 */
+    // overflowX: 'hidden', /* 禁用水平滾動條 */
     "&::-webkit-scrollbar": {
       width: '10px', /* 滾動條寬度 */
     },
@@ -34,6 +33,14 @@ const useStyles = makeStyles({
     "&::-webkit-scrollbar-track": {
       backgroundColor: 'transparent', /* 滾動條背景顏色 */
     },
+  },
+  labelRoot: {
+    overflow: 'hidden',
+  },
+  labelText: {
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
   },
 })
 
@@ -104,7 +111,11 @@ export default function FileTreeView() {
   const renderTree = (nodes) => (
     <TreeItem
       key={nodes.id} 
-      nodeId={nodes.id} 
+      nodeId={nodes.id}
+      classes={{
+        root: classes.labelRoot,
+        label: classes.labelText,
+      }}
       label={nodes.label}
       onFocusCapture={e => e.stopPropagation()}
       draggable
@@ -128,26 +139,24 @@ export default function FileTreeView() {
   };
 
   return (
-    // <div className={classes.treeview}>
-      <Paper className={classes.treeview}>
-        {dragFiles && <FileDragToKonva files={dragFiles} />}
-        <RefreshIcon onClick={handleRefresh} />
-        <CreateNewFolderIcon onClick={handleFolderImport}/>
-        <div className={classes.fileListContainer}>
-          <TreeView 
-            multiSelect 
-            defaultCollapseIcon={<ExpandMoreIcon />}
-            defaultExpandIcon={<ChevronRightIcon />}
-            aria-label="multi-select"
-            // defaultParentIcon={<FolderIcon />}
-            selected={selectedNode} 
-            onNodeSelect={handleNodeSelect}
-          >
-            {fileStructure && renderTree(fileStructure)}
-            {/* Render tree structure */}
-          </TreeView>
-        </div>
-      </Paper>
-    // </div>
+    <Paper className={classes.treeview}>
+      {dragFiles && <FileDragToKonva files={dragFiles} />}
+      <RefreshIcon onClick={handleRefresh} />
+      <CreateNewFolderIcon onClick={handleFolderImport}/>
+      <div className={classes.fileListContainer}>
+        <TreeView 
+          multiSelect 
+          defaultCollapseIcon={<ExpandMoreIcon />}
+          defaultExpandIcon={<ChevronRightIcon />}
+          aria-label="multi-select"
+          // defaultParentIcon={<FolderIcon />}
+          selected={selectedNode} 
+          onNodeSelect={handleNodeSelect}
+        >
+          {fileStructure && renderTree(fileStructure)}
+          {/* Render tree structure */}
+        </TreeView>
+      </div>
+    </Paper>
   );
 };
