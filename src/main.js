@@ -1,13 +1,69 @@
 const { app, BrowserWindow, ipcMain, dialog, Tray, Menu } = require('electron');
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs').promises;
 const { exec } = require('child_process');
 const nativeImage = require('electron').nativeImage
+
+let isDataSaved = false;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
+
+async function saveData(labels, nodes) {
+  try {
+    // 將數據轉換為 JSON 字符串
+    console.log("saveData", nodes);
+    const dataToSave = JSON.stringify({ labels, nodes }, null, 2); // 使用參數讓輸出更易於閱讀
+
+    // 異步地寫入數據到文件
+    await fs.writeFile('userData.json', dataToSave);
+
+    console.log('Data successfully saved to userData.json.');
+  } catch (error) {
+    // 處理可能出現的錯誤
+    console.error('Error saving data:', error);
+    throw error; // 可選：重新拋出錯誤，以便呼叫者可以處理或記錄
+  }
+}
+
+ipcMain.on('ondragstart', (event, filePath) => {
+  event.sender.startDrag({
+    file: path.join(__dirname, filePath),
+    icon: iconName
+  })
+})
+
+// // on app ready Load User Data
+// const handleLoadUserData = async () => {
+//   // 獲取應用數據存儲目錄
+//   const userDataPath = (electron.app || electron.remote.app).getPath('userData');
+//   console.log(userDataPath);
+
+//   // 從文件讀取數據
+//   function readDataFromFile(filename) {
+//     // const filePath = path.join(userDataPath, filename);
+//     if (fs.existsSync(userDataPath)) {
+//       const rawData = fs.readFileSync(userDataPath);
+//       return JSON.parse(rawData);
+//     }
+//     return null; // 或返回預設值
+//   }
+
+  
+//   // const userDataPath = app.getPath('userData');
+//   // const userData = fs.readFileSync(userDataPath, 'utf-8');
+//   // return userData;
+
+
+//   // // 寫入數據到文件
+//   // function saveDataToFile(filename, data) {
+//   //     const filePath = path.join(userDataPath, filename);
+//   //     fs.writeFileSync(filePath, JSON.stringify(data));
+//   // }
+
+// }
 
 
 // 函数用于打开文件夹选择对话框
@@ -24,48 +80,46 @@ async function openFolderDialog() {
   }
 }
 
-function traverseFolder(rootPath) {
+async function traverseFolder(rootPath) {
   const rootName = path.basename(rootPath);
   const rootNode = {
-    id: rootPath, // 資料夾絕對路徑作為 ID
-    label: rootName, // 資料夾名稱作為標籤
-    type: 'folder', // 標記這是一個資料夾節點
+    id: rootPath,
+    label: rootName,
+    type: 'folder',
     children: [],
   };
 
-  const files = fs.readdirSync(rootPath);
+  const files = await fs.readdir(rootPath);
 
-  const fileNodes = [];
-  const folderNodes = [];
-
-  files.forEach(file => {
+  const childNodes = await Promise.all(files.map(async (file) => {
     const filePath = path.join(rootPath, file);
-    const stats = fs.statSync(filePath);
+    const stats = await fs.stat(filePath);
 
     if (stats.isDirectory()) {
-      const childNode = traverseFolder(filePath); // 遞迴處理資料夾
-      folderNodes.push(childNode);
+      return traverseFolder(filePath); // 遞迴處理資料夾
     } else if (stats.isFile()) {
       const fileName = path.basename(filePath);
       const fileExtension = path.extname(filePath);
-      const fileId = filePath; // 檔案絕對路徑作為 ID
-
-      const fileNode = {
-        id: fileId,
+      
+      return {
+        id: filePath,
         label: fileName,
-        type: 'file', // 標記這是一個檔案節點
-        extension: fileExtension, // 檔案副檔名
-        lastModified: stats.mtime.getTime(), // 上次修改時間
+        type: 'file',
+        extension: fileExtension,
+        lastModified: stats.mtime.getTime(),
       };
-
-      fileNodes.push(fileNode);
     }
-  });
+  }));
 
-  // Sort folders by last modified time
+  // 過濾未定義的節點（例如，如果有條件分支不返回值）
+  const filteredNodes = childNodes.filter(node => node !== undefined);
+
+  // 將節點分為文件夾和文件
+  const folderNodes = filteredNodes.filter(node => node.type === 'folder');
+  const fileNodes = filteredNodes.filter(node => node.type === 'file');
+
+  // 按最後修改時間排序
   folderNodes.sort((a, b) => b.lastModified - a.lastModified);
-
-  // Sort files by last modified time
   fileNodes.sort((a, b) => b.lastModified - a.lastModified);
 
   rootNode.children = [...folderNodes, ...fileNodes];
@@ -79,7 +133,7 @@ async function handleOpenFolder() {
     const absolutePath = path.resolve(selectedFolder);
     try {
       // const files = await fs.promises.readdir(absolutePath);
-      const files = traverseFolder(absolutePath);
+      const files = await traverseFolder(absolutePath);
       return files;
     } catch (err) {
       console.error('Error reading folder:', err);
@@ -139,12 +193,18 @@ const handleLoadFileIcon = async (_, filePath) => {
 }
 
 const createWindow = () => {
+  // Save User Data
+  ipcMain.on('save-user-data', async (event, { labels, nodes }) => {
+    // 這裡執行保存數據的邏輯
+    await saveData(labels, nodes);
+  });
   // Import Folder files
   ipcMain.handle('dialog:openFolder', handleOpenFolder);
   // Open File
   ipcMain.handle('main:openFile', handleOpenFile);
   // Load FileIcon
   ipcMain.handle('main:loadIcon', handleLoadFileIcon);
+  
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -175,20 +235,27 @@ const createWindow = () => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+
+  // 窗口要关闭的时候触发
+  mainWindow.on('close', (e) => {
+    if (!isDataSaved) {
+      e.preventDefault(); // 阻止窗口立即關閉
+      mainWindow.webContents.send('request-save-data');
+  
+      console.log("Data saved, closing window");
+      isDataSaved = true;
+      mainWindow.close(); // 現在可以安全關閉窗口
+    } else {
+      // 如果數據已經保存，直接關閉窗口
+      e.defaultPrevented = false; // 不再阻止窗口關閉
+    }
+  });
 };
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', createWindow);
-
-ipcMain.on('ondragstart', (event, filePath) => {
-  event.sender.startDrag({
-    file: path.join(__dirname, filePath),
-    icon: iconName
-  })
-})
-
 
 
 // 监听来自渲染进程的获取文件夹内容请求

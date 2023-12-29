@@ -3,6 +3,18 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  // loadUserData: async () => {
+  //   return ipcRenderer.invoke('main:loadUserData');
+  // },
+  requestSaveData: (callback) => {
+    ipcRenderer.on('request-save-data', callback);
+  },
+  removeRequestSaveData: (callback) => {
+    ipcRenderer.removeListener('request-save-data', callback);
+  },
+  saveUserData: ({ labels, nodes }) => {
+    ipcRenderer.send('save-user-data', { labels, nodes });
+  },
   startDrag: (fileName) => {
     ipcRenderer.send('  ', fileName)
   },

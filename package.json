@@ -1,6 +1,6 @@
 {
-  "name": "my-app",
-  "productName": "my-app",
+  "name": "universe-mind-note",
+  "productName": "UMN",
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".webpack/main",
