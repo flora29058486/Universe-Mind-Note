@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Circle, Layer, Text, Group } from 'react-konva';
+import { useNodes } from '../Context/NodeContext.js';
 
-const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo, onFolderOpen }) => {
-  const [nodes, setNodes] = useState([]);
+const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
+  const { nodes, setNodes, updateNodePosition, nodeIntoFolder } = useNodes();
+  const [nodesInThisFile, setNodesInThisFile] = useState([]);
   const [previousShape, setPreviousShape] = useState(null);
   const [nodeMoving, setNodeMoving] = useState(null);
   const existingNodeLayerRef = useRef();
   const moveNodeTempLayerRef = useRef();
-  const nodesRef = useRef([]);
 
   useEffect(() => {
-
     // 設定繪製的所有node
     const updatedNodes = nodeInfo.map(async (node) => {
       let fileIconBase64;
@@ -45,11 +45,8 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo, onFolderOp
 
     // 在這裡等待所有 Promise 完成後，再設置 nodes 的狀態
     Promise.all(updatedNodes).then((updatedNodesArray) => {
-      setNodes(updatedNodesArray);
+      setNodesInThisFile(updatedNodesArray);
     });
-
-    // 將更新資訊傳出
-    onUpdateNodeInfo(nodesRef.current);
 
   }, [nodeInfo]);
 
@@ -58,7 +55,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo, onFolderOp
     
     const id = e.target.id();
 
-    setNodes((prevNodes) =>
+    setNodesInThisFile((prevNodes) =>
       prevNodes.map((node) => ({
         ...node,
         isDragging: node.nodeId === id,
@@ -93,7 +90,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo, onFolderOp
     // Set moving node Info
     const nodeId = e.target.attrs.id;
     // Find the node with nodeId
-    setNodeMoving(nodes.find(node => node.nodeId === nodeId));
+    setNodeMoving(nodesInThisFile.find(node => node.nodeId === nodeId));
   };
 
   const handleDragEnd = (e) => {
@@ -101,13 +98,17 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo, onFolderOp
     
     const pos = e.target.getStage().getPointerPosition();
     const existingNodeLayer = e.target.getStage().findOne('.existingNodeLayer');
+    // console.log(e.target.attrs.id)
+    // console.log(e.target.position())
+    updateNodePosition(e.target.attrs.id, e.target.position().x, e.target.position().y);
+  
     const shape = existingNodeLayer.getIntersection(pos);
     
     if (shape) {
       previousShape.fire('drop', { evt: e.evt }, true);
     }
 
-    setNodes((prevNodes) =>
+    setNodesInThisFile((prevNodes) =>
       prevNodes.map((node) => ({
         ...node,
         isDragging: false,
@@ -165,10 +166,10 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo, onFolderOp
   const handleClick = (e, node) => {
     e.cancelBubble = true;
 
-    console.log(e.evt.button);
+    // console.log(e.evt.button);
     // Open nodeDialog
     if (node.nodeType !== 'folder' && e.evt.button === 0) {
-      console.log('Open nodeDialog');
+      // console.log('Open nodeDialog');
     };
   };
 
@@ -213,18 +214,18 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo, onFolderOp
         existingNodeLayerRef.current.batchDraw();
       }
 
-      // updateNode Info: Delete node on Knova, send it to folder
+      
       const nodeToDropId = nodeMoving.nodeId;
-      const updatedChildInfo = [...dropFolder.childNode, nodeMoving];
-      const updatedNode = { ...dropFolder, childNode: updatedChildInfo };
-  
-      const updatedNodes = nodes
-        .map((n) => (n.nodeId === dropFolder.nodeId ? updatedNode : n))
-        .filter((n) => n.nodeId !== nodeToDropId);
-  
-      setNodes(updatedNodes);
-      nodesRef.current = updatedNodes;
-      onUpdateNodeInfo(nodesRef.current);
+      const folderId = dropFolder.nodeId;
+      // const updatedChildInfo = [...dropFolder.childNode, nodeMoving];
+      // const updatedNode = { ...dropFolder, childNode: updatedChildInfo };
+
+      // const updatedNodes = nodesInThisFile
+      //   .map((n) => (n.nodeId === dropFolder.nodeId ? updatedNode : n))
+      //   .filter((n) => n.nodeId !== nodeToDropId);
+
+      nodeIntoFolder(nodeToDropId, folderId);
+
       setNodeMoving(null);
     } else {
       return;
@@ -234,7 +235,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onUpdateNodeInfo, onFolderOp
   return (
     <>
       <Layer name="existingNodeLayer" ref={existingNodeLayerRef}>
-        {nodes.map((node, index) => (
+        {nodesInThisFile.map((node, index) => (
           <Group
             id={node.nodeId}
             x={node.x}

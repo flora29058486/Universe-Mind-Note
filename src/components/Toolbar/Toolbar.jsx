@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { styled, useTheme, createTheme, ThemeProvider } from '@mui/material/styles';
-import { makeStyles } from '@mui/styles';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Tooltip from '@mui/material/Tooltip';
-import Paper from '@mui/material/Paper';
 import FolderIcon from '@mui/icons-material/Folder';
 import BookmarkOutlinedIcon from '@mui/icons-material/BookmarkOutlined';
 import SearchIcon from '@mui/icons-material/Search';
@@ -19,62 +16,9 @@ import FileTreeView from './FileImport/FileTreeView.jsx';
 import LabelManager from './LabelManager/LabelManager.js';
 import { useLabels } from '../Context/LabelContext.js';
 
-
-const useStyles = makeStyles({
-  drawer: {
-    // width: '72px',
-    flexGrow: 1,
-    flexShrink: 0,
-    // '& .MuiDrawer-paper': {
-    //   width: '72px',
-    //   boxSizing: 'border-box',
-    // },
-  },
-  drawerExpanded: {
-    // width: '500px', // 或是其他你想要的寬度
-    flexShrink: 0,
-    flexGrow: 1,
-    // '& .MuiDrawer-paper': {
-    //   width: '72px',
-    //   boxSizing: 'border-box',
-    // },
-  },
-  // list: {
-  //   display: 'flex',
-  //   flexDirection: 'column',
-  //   width: '0px',
-  //   overflow: 'hidden',
-  //   backgroundColor: '#f0f0f0',
-  //   borderRight: '1px solid #ccc',
-  // },
-  // listItem: {
-  //   paddingTop: '12px',
-  //   color: '#444',
-  //   '&:hover': {
-  //     backgroundColor: '#e0e0e0',
-  //     color: 'black',
-  //   },
-  // },
-  // paper: {
-  //   flexGrow: 1,
-  //   display: 'flex',
-  //   flexDirection: 'column',
-  //   overflowY: 'auto',
-  //   paddingLeft: '16px',
-  // },
-});
-
 function Toolbar({onToolSelect}) {
-  const classes = useStyles();
-  // const theme = useTheme(componentTheme);
-  // const [isToolBarOpen, setToolBarOpen] = useState(false);
-  // const [isTreeViewOpen, setTreeViewOpen] = useState(false);
   const [selectedButton, setSelectedButton] = useState('');
   const { labels, addLabel, removeLabel, mergeLabels, updateLabel, searchLabelsByName } = useLabels()
-
-  // const toggleTreeView = () => {
-  //   setTreeViewOpen(!isTreeViewOpen);
-  // };
 
   const handleButtonClick = (buttonId) => {
     if (buttonId === selectedButton) {
@@ -91,21 +35,17 @@ function Toolbar({onToolSelect}) {
   }, [selectedButton]);
 
   return (
-    // <ThemeProvider theme={componentTheme}>
     <Grid
       container
       justifyContent="flex-start"
       wrap='nowrap'
-      // alignItems="stretch"
       spacing={0}
     >
-      {/* <Grid item xs={selectedButton !== '' ? 3 : 12} md={selectedButton !== '' ? 3 : 12} sx={{ height: '100vh' }}> */}
       <Grid item sx={{ height: '100vh', width: '72px'}}>
         <Drawer
           open={true} 
           variant="permanent"
           anchor="left"
-          className={`${selectedButton ? classes.drawerExpanded : classes.drawer }`}
         >
           <List>
             <ListItemButton
@@ -180,7 +120,6 @@ function Toolbar({onToolSelect}) {
           </List>
         </Drawer>
       </Grid>
-      {/* <Grid item xs={9} md={9}> */}
       <Grid item sx={{ height: '100vh', maxWidth: 'calc(100% - 72px)', flexShrink: 1, flexGrow: 1 }}>
         {selectedButton === 'Explorer' && (
           <FileTreeView selectedButton={selectedButton} />

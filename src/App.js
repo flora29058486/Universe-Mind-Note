@@ -1,11 +1,8 @@
-import React, { useRef, useEffect, Component, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import ToggleButtonOnMainKonva from './components/MUI/ToggleButtonOnMainKonva/ToggleButtonOnMainKonva.jsx';
 import Toolbar from './components/Toolbar/Toolbar.jsx';
-import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import MainKonva from './components/MainKonva/MainKonva.js';
 import './App.css';
-// import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 import { SaveUserData } from './components/SaveUserData/SaveUserData.js';
 import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 import { LabelsProvider } from './components/Context/LabelContext.js'; 
@@ -13,28 +10,77 @@ import { NodeProvider } from './components/Context/NodeContext.js';
 
 
 export default function App() {
-  const [konvaData, setKonvaData] = useState({});
+  // userDataSaved
+  const [userDataNode, setUserDataNode] = useState(null);
+  const [userDataLabel, setUserDataLabel] = useState(null);
+
   // 螢幕左方工具列
   const [toolSelect, setToolSelect] = useState('');
   // 畫布上的按鈕
   const [toggleButton, setToggleButton] = useState('');
   const [fileDrag, setFileDrag] = useState([]);
   const [dropClientPosition, setDropClientPosition] = useState({ x: 0, y: 0 });
-  // galaxy lables state
-  // const [labels, setLabels] = useState([]);
-  // const labelsFromWhiteBoard = useRef([]);
+  const [konvaStageJson, setKonvaStageJson] = useState(null);
+
+  // request StageRef when app end
+  const [stageSave, setStageSave] = useState(0);
+
+  // const [userData, setUserData] = useState(null);
+
+  // 初始化時讀取 userData(上次關閉前的資料)
+  const handleLoadUserData = async () => {
+    let preUserData = await window.electronAPI.loadUserData();
+    
+    preUserData = JSON.parse(preUserData);
+
+    if (Object.keys(preUserData).length === 0) {
+      setUserDataNode([]);
+      setUserDataLabel([]);
+      return;
+    } else {
+      setUserDataNode(preUserData.nodes);
+      setUserDataLabel(preUserData.labels);
+    }
+    
+    // console.log(preUserData);
+
+    // // prevent if stageP is not define
+    // if (preUserData.stage === undefined) {
+    //   return;
+    // } else {
+    //   let stageP = JSON.parse(preUserData.stage);
+    //   console.log(stageP);
+    //   // setUserData(stageP);
+    // }
+  };
+
+  useEffect(() => {
+    handleLoadUserData();
+  }, []);
+
+  // 結束應用時觸發 
+  const handleStateChange = (trueOrFalse) => {
+    // 处理状态变化
+    // if (trueOrFalse) {
+    //   let currentNumber = stageSave;
+    //   setStageSave(currentNumber++);
+    // }
+    let currentNumber = stageSave;
+    // console.log("stageSave: ", stageSave);
+    setStageSave(currentNumber+1);
+  };
+
+  // change this code below to when user close the app only return once (not done yet)
+  const handleStageRefChange = useCallback((newRef) => {
+    if (newRef) {
+      setKonvaStageJson(newRef.toJSON());
+    }
+    // console.log(konvaStageJson);
+  }, []);
 
   useEffect(() => {
 
   }, [fileDrag]);
-
-  // useEffect(() => {
-  //   const whiteBoard = new WhiteBoard();
-  //   whiteBoard.initStage(window.innerWidth,  window.innerHeight, 'white'); // 填入你的容器 ID
-  //   whiteBoard.initMainLayer();
-  //   whiteBoard.initBackLayer(window.innerWidth,  window.innerHeight);
-  // }, []);
-
 
   // 子组件接收值
   const handleToolSelect = useCallback((button) => {
@@ -65,19 +111,19 @@ export default function App() {
   }, [dropClientPosition]);
 
   return (
-    <LabelsProvider>
-    <NodeProvider>
-      <SaveUserData />
-      {/* <Grid container overflow={"hidden"} position={"relative"}> */}
-      <Grid container sx={{ overflow: 'hidden', position: 'relative', flexWrap: 'nowrap' }}>
-        <ToggleButtonOnMainKonva onToggleButtonSelect={handleToggleButtonSelect}/>
-        {/* 左邊的 Grid */}
-        {
-          toolSelect
+    userDataNode && userDataLabel && (
+      <LabelsProvider initialLabels={userDataLabel}>
+      <NodeProvider initialNodes={userDataNode}>
+        <SaveUserData onStateChange={handleStateChange} konvaStageJson={konvaStageJson} />
+        <Grid container sx={{ overflow: 'hidden', position: 'relative', flexWrap: 'nowrap' }}>
+          <ToggleButtonOnMainKonva onToggleButtonSelect={handleToggleButtonSelect}/>
+          {/* 左邊的 Grid */}
+          {
+            toolSelect
             ? (
               // 當 toolSelect 為 true，使用 sx 屬性動態設定樣式
               <Grid item
-                sx={{ 
+                sx={{
                   display: 'flex', 
                   justifyContent: 'flex-start',
                 }} 
@@ -98,10 +144,10 @@ export default function App() {
               <Toolbar onToolSelect={handleToolSelect}/>
             </Grid>
             )
-        }
-        {/* 右邊的 Grid */}
-        {
-          toolSelect
+          }
+          {/* 右邊的 Grid */}
+          {
+            toolSelect
             ? (
               // 當 toolSelect 為 true，使用 sx 屬性動態設定樣式
               <Grid item
@@ -113,6 +159,8 @@ export default function App() {
               >
                 <div id="konva-container" onDrop={handleDropOutside} onDragOver={(e) => e.preventDefault()}>
                   <WhiteBoard
+                    stageSave={stageSave}
+                    onStageRefChange={handleStageRefChange}
                     fileDrop={fileDrag}
                     toggleButton={toggleButton}
                     dropClientPosition={dropClientPosition}
@@ -131,6 +179,8 @@ export default function App() {
               >
                 <div id="konva-container" onDrop={handleDropOutside} onDragOver={(e) => e.preventDefault()}>
                   <WhiteBoard
+                    stageSave={stageSave}
+                    onStageRefChange={handleStageRefChange}
                     fileDrop={fileDrag}
                     toggleButton={toggleButton}
                     dropClientPosition={dropClientPosition}
@@ -138,9 +188,10 @@ export default function App() {
                 </div>
               </Grid>
             )
-        }  
-      </Grid>
-    </NodeProvider>
-    </LabelsProvider>
-  );
-}
+          }  
+        </Grid>
+      </NodeProvider>
+      </LabelsProvider>
+    )
+  )
+};

@@ -1,8 +1,8 @@
-const { app, BrowserWindow, ipcMain, dialog, Tray, Menu } = require('electron');
+const { app, remote, BrowserWindow, ipcMain, dialog, Tray, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 const { exec } = require('child_process');
-const nativeImage = require('electron').nativeImage
+// const nativeImage = require('electron').nativeImage
 
 let isDataSaved = false;
 
@@ -11,16 +11,17 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-async function saveData(labels, nodes) {
+async function saveData(labels, nodes, stage) {
   try {
     // 將數據轉換為 JSON 字符串
-    console.log("saveData", nodes);
-    const dataToSave = JSON.stringify({ labels, nodes }, null, 2); // 使用參數讓輸出更易於閱讀
+    const dataToSave = JSON.stringify({ labels, nodes, stage }, null, 2); // 使用參數讓輸出更易於閱讀
 
     // 異步地寫入數據到文件
-    await fs.writeFile('userData.json', dataToSave);
+    const userDataPath = (app || remote.app).getPath('userData');
+    const filePath = path.join(userDataPath, 'userData.json');
 
-    console.log('Data successfully saved to userData.json.');
+    await fs.writeFile(filePath, dataToSave);
+
   } catch (error) {
     // 處理可能出現的錯誤
     console.error('Error saving data:', error);
@@ -28,43 +29,31 @@ async function saveData(labels, nodes) {
   }
 }
 
-ipcMain.on('ondragstart', (event, filePath) => {
-  event.sender.startDrag({
-    file: path.join(__dirname, filePath),
-    icon: iconName
-  })
-})
+// 在应用准备就绪时加载用户数据
+const handleLoadUserData = async () => {
+  try {
+    // 获取应用数据存储目录
+    const userDataPath = (app || remote.app).getPath('userData');
+    const filePath = path.join(userDataPath, 'userData.json');
 
-// // on app ready Load User Data
-// const handleLoadUserData = async () => {
-//   // 獲取應用數據存儲目錄
-//   const userDataPath = (electron.app || electron.remote.app).getPath('userData');
-//   console.log(userDataPath);
+    // 尝试访问文件来检查其是否存在
+    await fs.access(filePath);
 
-//   // 從文件讀取數據
-//   function readDataFromFile(filename) {
-//     // const filePath = path.join(userDataPath, filename);
-//     if (fs.existsSync(userDataPath)) {
-//       const rawData = fs.readFileSync(userDataPath);
-//       return JSON.parse(rawData);
-//     }
-//     return null; // 或返回預設值
-//   }
-
-  
-//   // const userDataPath = app.getPath('userData');
-//   // const userData = fs.readFileSync(userDataPath, 'utf-8');
-//   // return userData;
-
-
-//   // // 寫入數據到文件
-//   // function saveDataToFile(filename, data) {
-//   //     const filePath = path.join(userDataPath, filename);
-//   //     fs.writeFileSync(filePath, JSON.stringify(data));
-//   // }
-
-// }
-
+    // 如果文件存在，读取并返回其内容
+    const rawData = await fs.readFile(filePath, 'utf8');
+    return rawData;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // 文件不存在时返回空的 JSON 对象
+      console.log('File does not exist, returning empty JSON.');
+      return JSON.stringify({});
+    } else {
+      // 其他错误
+      console.error('Error loading user data:', error);
+      throw error;
+    }
+  }
+};
 
 // 函数用于打开文件夹选择对话框
 async function openFolderDialog() {
@@ -194,10 +183,12 @@ const handleLoadFileIcon = async (_, filePath) => {
 
 const createWindow = () => {
   // Save User Data
-  ipcMain.on('save-user-data', async (event, { labels, nodes }) => {
+  ipcMain.on('save-user-data', async (event, { labels, nodes, stage }) => {
     // 這裡執行保存數據的邏輯
-    await saveData(labels, nodes);
+    await saveData(labels, nodes, stage);
   });
+  // load userData
+  ipcMain.handle('user-data-loaded', handleLoadUserData);
   // Import Folder files
   ipcMain.handle('dialog:openFolder', handleOpenFolder);
   // Open File
@@ -205,7 +196,6 @@ const createWindow = () => {
   // Load FileIcon
   ipcMain.handle('main:loadIcon', handleLoadFileIcon);
   
-
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     show: false,
@@ -242,7 +232,6 @@ const createWindow = () => {
       e.preventDefault(); // 阻止窗口立即關閉
       mainWindow.webContents.send('request-save-data');
   
-      console.log("Data saved, closing window");
       isDataSaved = true;
       mainWindow.close(); // 現在可以安全關閉窗口
     } else {
@@ -260,15 +249,6 @@ app.on('ready', createWindow);
 
 // 监听来自渲染进程的获取文件夹内容请求
 // ipcMain.on('dialog:openFolder', handleOpenFolder);
-
-// ipcMain.handle('dialog:openFolder', async (event) => {
-//   console.log("on main");
-//   const folderContents = await onFolderLoad();
-//   mainWindow.webContents.send('foldercontents', folderContents);
-//   // event.reply('foldercontents', folderContents);
-//   // const folderContents = await loadFolder();
-//   // event.reply('folderContents', folderContents);
-// });
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

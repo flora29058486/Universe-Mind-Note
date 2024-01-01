@@ -1,13 +1,20 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useLabels } from '../Context/LabelContext.js';
 
 const NodeContext = createContext();
 
 export const useNodes = () => useContext(NodeContext);
 
-export const NodeProvider = ({ children }) => {
+export const NodeProvider = ({ children, initialNodes }) => {
   const [nodes, setNodes] = useState([]);
   const { labels, removeLabel } = useLabels();
+
+  useEffect(() => {
+    if (initialNodes) {
+      console.log("Initial nodes:", initialNodes);
+      setNodes(initialNodes);
+    }
+  }, [initialNodes]);
 
   const addNode = (node) => {
     console.log(node);
@@ -84,10 +91,38 @@ export const NodeProvider = ({ children }) => {
     );
   };
 
+  const updateNodePosition = (nodeId, x, y) => {
+    setNodes(prevNodes => prevNodes.map(node => {
+      if (node.nodeId === nodeId) {
+        return { ...node, x: x, y: y };
+      }
+      return node;
+    }));
+  };
+
+  const nodeIntoFolder = (nodeId, folderId) => {
+    setNodes(prevNodes => {
+      // 先找到需要移动的节点
+      const nodeToMove = prevNodes.find(node => node.nodeId === nodeId);
+  
+      // 更新节点，除了被移动的节点外
+      const updatedNodes = prevNodes.filter(node => node.nodeId !== nodeId).map(node => {
+        if (node.nodeId === folderId) {
+          // 将被移动的节点添加到 folder 的 childNode 中
+          return { ...node, childNode: [...node.childNode, nodeToMove] };
+        }
+        return node;
+      });
+  
+      return updatedNodes;
+    });
+  }
+  
+
   // 其他管理節點的邏輯...
 
   return (
-    <NodeContext.Provider value={{ nodes, setNodes, addNode, deleteNode, updatedNode, updateLabelChange }}>
+    <NodeContext.Provider value={{ nodes, setNodes, addNode, deleteNode, updatedNode, updateLabelChange, updateNodePosition, nodeIntoFolder }}>
       {children}
     </NodeContext.Provider>
   );

@@ -16,32 +16,26 @@ import { useLabels } from '../Context/LabelContext.js';
 const width = window.innerWidth;
 const height = window.innerHeight;
 const step = 60;
-const padding = 200;
-const screenLeftSidePixel = 480;
+const padding = 500;
+const screenLeftSidePixel = 350;
 
 function generateBackgroundLayer() {
   return ({
     key: "backgroundLayer",
     id: "backgroundLayer",
-    x: width,
-    y: height + padding,
-    // scale: 1,
+    x: width + 2*padding,
+    y: height + 2*padding,
   });
 }
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
+export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton, dropClientPosition }) => {
+
   const prevFileDrop = useRef(fileDrop);
-  const [backgroundLayerStat, setBackgroundLayerStat] = useState(INITIAL_BAKEGROUND_STATE);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [relPosToScreen, setRelPosToScreen] = useState({ x: 0, y: 0 });
-  // 下面這個是拖進來時新增用
-  const [dropnodeInfo, setDropNodeInfo] = useState([]);
   // NodeContextMenu
   const [contextMenu, setContextMenu] = useState(null);
-  // accept nodeInfo change from DrawExistingNode
-  const updateNodeInfoRef = useRef([]);
   // Dialog nodeIndo change from NodeDialog.js
   const dialogNodeInfo = useRef({});
   // contextMenu CurrentShape
@@ -49,8 +43,6 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   // handleNodeDialogOpen
   const [nodeDialogOpen, setNodeDialogOpen] = useState(false);
   const [addLabelDialogOpen, setAddLabelDialogOpen] = useState(false);
-  // save all lebels in the node
-  const [labelsToDialog, setLabelsToDialog] = useState([]);
   // FolderDialog open
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [folderDialogNode, setFolderDialogNode] = useState(null);
@@ -61,8 +53,16 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
   // context
   const { labels, setLabels } = useLabels();
   const { nodes, setNodes, addNode, deleteNode } = useNodes();
+
+  // Stageinfo safe to userData
+  useEffect(() => {
+    console.log('stageSave', stageSave)
+    if (stageRef.current) {
+      onStageRefChange(stageRef.current);
+    }
+  }, [stageSave]);
     
-  const generateNodes = (dropNodes, dropClientPosition) => {
+  const generateNodes = (dropNodes, nodePosition) => {
     const fileCount = dropNodes.length;
     const squareSize = Math.ceil(Math.sqrt(fileCount));
     const circleRadius = 60;
@@ -71,9 +71,9 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
     const NodesGenerate = dropNodes.map((fileInfo, counter) => {
       const nodeId = fileInfo.nodeId;
       const fileName = fileInfo.fileName;
-      const startx = dropClientPosition.x - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate)) - screenLeftSidePixel;
-      const starty = dropClientPosition.y - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate));
-      
+      const startx = nodePosition.x - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate)) - screenLeftSidePixel;
+      const starty = nodePosition.y - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate));
+
       return {
         ...fileInfo,
         key: fileName + nodeId,
@@ -104,13 +104,13 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
       };
     });
 
-    const NodesGenerate = generateNodes(updatedNodeInit, dropClientPosition);
-    console.log(NodesGenerate);
-    setDropNodeInfo(NodesGenerate);
+    let nodePosition = { x: dropClientPosition.x - position.x, y: dropClientPosition.y - position.y };
+
+    const NodesGenerate = generateNodes(updatedNodeInit, nodePosition);
     addNode(NodesGenerate);
   };
 
-  const generateFolderNode = (dropClientPosition) => {
+  const generateFolderNode = (folderPosition) => {
     return [{
       nodeId: uuidv4(),
       fileName: "新的資料夾",
@@ -118,26 +118,15 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
       nodeIcon: 'folder',
       attribute: [],
       childNode: [],
-      x: dropClientPosition.x,
-      y: dropClientPosition.y,
+      x: folderPosition.x,
+      y: folderPosition.y,
     }];
-  };
-
-  const handleFileIntoFolder = (updatedNodes) => {
-    // If updateNodes (value from DrawExistingNode) is not equal to updateNodeInfoRef, (the value has change)
-    const prevUpdatedNodes = updateNodeInfoRef.current;
-
-    if (JSON.stringify(prevUpdatedNodes) !== JSON.stringify(updatedNodes)) {
-      setNodes(updatedNodes);
-      updateNodeInfoRef.current = updatedNodes;
-    }
   };
 
   const handleDialogInfoChange = useCallback((updatedNode) => {
     const prevDialogNodeInfo = dialogNodeInfo.current;
 
     if (JSON.stringify(prevDialogNodeInfo) !== JSON.stringify(updatedNode)) {
-
       setNodes(nodes =>
         nodes.map(node => {
           if (node.nodeId === updatedNode.nodeId) {
@@ -170,13 +159,14 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
     );
   }, [labels]);
 
+  // resize window
   useEffect(() => {
     const handleResize = () => {
       setStageSize({ width: window.innerWidth, height: window.innerHeight });
-      console.log(window.innerWidth);
-      console.log(stageRef.current);
+      // setStageProps({ ...stageProps, width: window.innerWidth, height: window.innerHeight})
 
       if (stageRef.current) {
+        console.log(stageRef.current)
         stageRef.current.draw();
       }
     };
@@ -193,11 +183,11 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
 
   const handleClick = useCallback((e) => {
     e.cancelBubble = true;
-    console.log(e.currentTarget.getPointerPosition());
-    console.log(e.currentTarget.getRelativePointerPosition());
+    // console.log(e.currentTarget.getPointerPosition());
+    // console.log(e.currentTarget.getRelativePointerPosition());
     const pos = e.currentTarget.getRelativePointerPosition();
 
-    if (toggleButton === "create" && e.evt.button === 0) {
+    if (toggleButton === "create-folder" && e.evt.button === 0) {
       const NodesGenerate = generateFolderNode(pos);
 
       addNode(NodesGenerate);
@@ -214,11 +204,9 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
     console.log(e.target);
 
 
-    console.log(position);
-    console.log(rel);
+    console.log("position", position);
     // 更新位置狀態
     setPosition({ x: position.x, y: position.y });
-    setRelPosToScreen(rel);
   };
 
   const handleContextMenuClose = useCallback(() => {
@@ -287,25 +275,23 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
       <Stage
         width={stageSize.width} 
         height={stageSize.height}
-        ref={stageRef}
         draggable={true}
+        ref={stageRef}
         id='stage'
         onDragEnd={handleDragEnd}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
       >
-        <BackLayerRender 
-          width={width} 
-          height={height} 
-          positionx={position.x} 
-          positiony={position.y} 
+        <BackLayerRender
+          // width, height - padding*scale
+          width={stageSize.width + 2*padding} 
+          height={stageSize.height + 2*padding} 
+          positionx={position.x + padding}
+          positiony={position.y + padding}
           step={step}
         />
         <DrawExistingNode
-          // whiteBoard to draw node
           nodeInfo={nodes}
-          // draw node to whiteBoard
-          onUpdateNodeInfo={handleFileIntoFolder}
           circleRadius={60}
           onFolderOpen={handleFolderDialogOpen}
         />
@@ -331,7 +317,6 @@ export const WhiteBoard = ({ fileDrop, toggleButton, dropClientPosition }) => {
       </Menu>
       <NodeDialog
         currentNode={contextMenuCurrentShape.current}
-        // labelsAlreadyExist={labelsToDialog}
         open={nodeDialogOpen}
         handleClose={handleNodeDialogClose}
         onUpdateNodeInfo={handleDialogInfoChange}

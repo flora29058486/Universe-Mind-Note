@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Rect, Layer } from "react-konva";
 
 export const BackLayerRender = ({ width, height, positionx, positiony, step }) => {
-  const [position, setPosition] = useState({ x: -120, y: -120 });
   const [grid, setGrid] = useState([]);
 
   // Smooth math for point
@@ -65,7 +64,7 @@ export const BackLayerRender = ({ width, height, positionx, positiony, step }) =
     // setGrid(renderGrid(width, height, position.x, position.y, step));
     setGrid(renderGrid(width, height, positionx, positiony, step));
     console.log(grid);
-  }, [positionx, positiony]);
+  }, [positionx, positiony, width, height]);
 
   return (<Layer>
     {grid}

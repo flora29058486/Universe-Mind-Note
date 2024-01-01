@@ -3,24 +3,27 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // loadUserData: async () => {
-  //   return ipcRenderer.invoke('main:loadUserData');
-  // },
+  loadUserData: async () => {
+    try {
+      // 使用 ipcRenderer 來發送 'user-data-loaded' 請求到主進程
+      const userData = await ipcRenderer.invoke('user-data-loaded');
+      return userData;
+    } catch (error) {
+      console.error('Error while loading userData electronAPI:', error);
+      throw error;
+    }
+  },
   requestSaveData: (callback) => {
     ipcRenderer.on('request-save-data', callback);
   },
   removeRequestSaveData: (callback) => {
     ipcRenderer.removeListener('request-save-data', callback);
   },
-  saveUserData: ({ labels, nodes }) => {
-    ipcRenderer.send('save-user-data', { labels, nodes });
-  },
-  startDrag: (fileName) => {
-    ipcRenderer.send('  ', fileName)
+  saveUserData: ({ labels, nodes, stage }) => {
+    ipcRenderer.send('save-user-data', { labels, nodes, stage });
   },
   loadFolder: async () => { 
     const files = await ipcRenderer.invoke('dialog:openFolder');
-    console.log("ww")
     return files;
   },
   openFile: async (filePath) => {
@@ -38,11 +41,3 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
 })
-
-// contextBridge.exposeInIsolatedWorld('foldercontents', {
-//   foldercontents: () => {
-//     ipcRenderer.on('onfolderopen')
-//     console.log("ww")
-//   },
-
-// })

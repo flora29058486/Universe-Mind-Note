@@ -1,12 +1,19 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 const LabelContext = createContext();
 
 export const useLabels = () => useContext(LabelContext);
 
-export const LabelsProvider = ({ children }) => {
+export const LabelsProvider = ({ children, initialLabels }) => {
   const [labels, setLabels] = useState([]);
+
+  useEffect(() => {
+    console.log(initialLabels)
+    if (initialLabels) {
+      setLabels(initialLabels);
+    }
+  }, [initialLabels]);
 
   const addLabel = (newLabel) => {
     console.log(newLabel);
