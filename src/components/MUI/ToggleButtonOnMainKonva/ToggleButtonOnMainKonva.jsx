@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab';
 import { makeStyles } from '@material-ui/core/styles';
+import { Tooltip } from '@mui/material';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import CreateIcon from '@mui/icons-material/Create';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -44,7 +45,9 @@ const ToggleButtonOnMainKonva = ({onToggleButtonSelect}) => {
         aria-label="toggle button group"
       >
         <ToggleButton value="create-folder" aria-label="create-folder">
-          <CreateNewFolderIcon className={classes.icon} />
+          <Tooltip title="新增資料夾" arrow>
+            <CreateNewFolderIcon className={classes.icon} />
+          </Tooltip>
         </ToggleButton>
         <ToggleButton value="copy" aria-label="copy">
           <ContentCopyIcon className={classes.icon} />
