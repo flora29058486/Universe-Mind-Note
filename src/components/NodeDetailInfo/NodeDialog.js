@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Chip, Divider, Grid, IconButton, TextField, Tabs, Tab, Box } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import { debounce } from 'lodash-es';
 import { useNodes } from '../Context/NodeContext.js';
 import { useLabels } from '../Context/LabelContext.js';
 
@@ -23,11 +24,12 @@ function getTextColorForBackground(backgroundColor) {
 const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
   const { nodes, setNodes } = useNodes();
   const { labels, setLabels } = useLabels();
-  const [isInitialMount, setIsInitialMount] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(open);
   const [value, setValue] = React.useState(0);
   const [editTitle, setEditTitle] = useState(false);
   const [showChipDelete, setShowChipDelete] = useState(false);
+  const [deleteLabelId, setDeleteLabelId] = useState([]);
+  const [isDeleteLabel, setIsDeleteLabel] = useState(false);
   const [nodeData, setNodeData] = useState({
     nodeId: '',
     fileName: '',
@@ -35,11 +37,11 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
     x: 0,
     y: 0,
   });
-  const nodeLabels = useRef(null);
+  const [nodeLabels, setNodeLabels] = useState(null);
 
 
   const recentLabels = labels.filter(label => 
-    nodeLabels.current === null || !nodeLabels.current.some(nodeLabel => nodeLabel.labelId === label.labelId)
+    nodeLabels === null || !nodeLabels.some(nodeLabel => nodeLabel.labelId === label.labelId)
   )
   // 倒序排序
   const sortedRecentLabels = [...recentLabels].reverse();
@@ -48,14 +50,41 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
   const labelsToShow = sortedRecentLabels.slice(0, MAX_LABELS_TO_SHOW);
 
   useEffect(() => {
-    if (isInitialMount) {
-      setIsInitialMount(false);
-    } else {
-      // 当 nodeData 更新且不是首次渲染时，调用 onUpdateNodeInfo
-      // 未來改在這裡執行，不用傳出函數到WhiteBoard.js
-      onUpdateNodeInfo(nodeData);
+    if (deleteLabelId.length > 0 && isDeleteLabel) {
+      console.log("useEffect deleteLabelId", deleteLabelId)
+
+      // 更新標籤，如果沒有node使用這個標籤，就刪除
+      setLabels(prevLabels => {
+        // 過濾出還在使用中的標籤
+        const updatedLabels = prevLabels.filter(label => {
+          // 檢查當前標籤是否在任何節點的 attribute 屬性中
+          const isLabelUsed = nodes.some(node =>
+            node.attribute.some(attr => attr.labelId === label.labelId)
+          );
+          const nn = nodes.find(node => node.attribute.some(attr => attr.labelId === label.labelId));
+          console.log(nn);
+          console.log("isLabelUsed", isLabelUsed);
+          // 如果標籤在使用中，則保留這個標籤
+          return isLabelUsed;
+        });
+    
+        // 過濾出 labelIdArray 中不再使用的標籤ID
+        const labelsToRemove = deleteLabelId.filter(labelId =>
+          !nodes.some(node =>
+            node.attribute.some(attr => attr.labelId === labelId)
+          )
+        );
+    
+        // 僅用於除錯的日誌，輸出將被移除的標籤
+        console.log('Labels to remove:', labelsToRemove);
+    
+        return updatedLabels;
+      });
+
+      setIsDeleteLabel(false);
+      setDeleteLabelId([]); // 清除暫存的標籤刪除請求
     }
-  }, [nodeData, onUpdateNodeInfo]);
+  }, [nodes, deleteLabelId, isDeleteLabel]);
   
   useEffect(() => {
     setDialogOpen(open);
@@ -63,28 +92,47 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
     if (currentNode) {
       const groupId = currentNode.attrs.id;
       const node = nodes.find(node => node.nodeId === groupId);
-      nodeLabels.current = node.attribute;
+      setNodeLabels(node.attribute);
+
+      // 1
       setNodeData({
         nodeId: groupId,
         fileName: node.fileName,
-        attribute: nodeLabels.current ? nodeLabels.current : [],
+        attribute: nodeLabels ? nodeLabels : [],
         x: currentNode.attrs.x,
         y: currentNode.attrs.y,
       });
     }
   }, [currentNode, open, nodes]);
 
-  const handleCloseDialog = () => {
+  const handleCloseDialog = useCallback(() => {
     setDialogOpen(false);
     setEditTitle(false);
     setShowChipDelete(false);
-    // update open status (whiteBoard)
+
     handleClose(true);
+  }, [handleClose]);
+
+  const handleNodeInfoUpdate = (updateNode) => {
+
+    // 2
+    setNodeData((prevData) => {
+      const updatedNodeData = {
+        ...prevData,
+        nodeId: updateNode.nodeId !== undefined ? updateNode.nodeId : prevData.nodeId,
+        fileName: updateNode.fileName !== undefined ? updateNode.fileName : prevData.fileName,
+        attribute: updateNode.attribute !== undefined ? updateNode.attribute : prevData.attribute,
+        x: updateNode.x !== undefined ? updateNode.x : prevData.x,
+        y: updateNode.y !== undefined ? updateNode.y : prevData.y,
+      };
+      // console.log(updatedNodeData);
+      return updatedNodeData;
+    });
   };
-  
-  const handleTabChange = (event, newValue) => {
+
+  const handleTabChange = useCallback((event, newValue) => {
     setValue(newValue);
-  };
+  }, []);
   
   const handleEditTitle = () => {
     setEditTitle(true);
@@ -112,24 +160,29 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
   };
 
   // press "Enter"
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     e.stopPropagation();
-    
     if (e.key === 'Enter') {
-      const updateNode = {fileName: nodeData.fileName};
-      handleNodeInfoUpdate(updateNode);
+      handleNodeInfoUpdate({ fileName: nodeData.fileName });
       setEditTitle(false);
     }
+  }, [nodeData.fileName, handleNodeInfoUpdate]);
+
+  // 更新第一個 state
+  const updateFirstState = () => {
+    setIsDeleteLabel(true);
   };
 
-  const handleSave = () => {
-    const updateNode = {fileName: nodeData.fileName};
-    handleNodeInfoUpdate(updateNode);
+  const handleSave = useCallback(() => {
+    onUpdateNodeInfo(nodeData);
+    updateFirstState();
     handleCloseDialog();
-  };
+  }, [nodeData, onUpdateNodeInfo, handleCloseDialog]);
 
-  const handleAddLabel = (label) => {
+  const handleAddLabel = useCallback((label) => {
     // 更新節點數據
+
+    // 4
     setNodeData(prevData => ({
       ...prevData,
       attribute: [...prevData.attribute, label],
@@ -143,50 +196,29 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
       }
       return prevLabels;
     });
-  };
+  }, [setNodeData, setLabels, nodes]);
 
-  const handleDeleteLabel = (labelId) => {
+  const handleDeleteLabel = useCallback((labelId) => {
+    // 視覺上暫時看不到被刪除的標籤
+    setNodeLabels(prevLabels => prevLabels.filter(label => label.labelId !== labelId));
+    // 改變save之前的node資訊 => 少了標籤
     setNodeData((prevData) => {
       const newAttributes = prevData.attribute.filter(label => label.labelId !== labelId);
-      const updatedNodeData = {
+      return {
         ...prevData,
         attribute: newAttributes,
       };
-      nodeLabels.current = updatedNodeData.attribute;
-      return updatedNodeData;
-    });
-
-    // 更新全局標籤，如果該標籤不再與任何節點相關聯
-    setLabels(prevLabels => {
-      const isLabelUsed = nodes.some(node => node.attribute.some(attr => attr.labelId === labelId));
-      console.log(isLabelUsed);
-      if (isLabelUsed) {
-        return prevLabels.filter(label => label.labelId !== labelId);
-      }
-      return prevLabels;
     });
   
+    // 設置被刪除的 labelId (傳遞給handleSave)
+    setDeleteLabelId(prevId => [...prevId, labelId]);
+
     setShowChipDelete(false);
-  };
+  }, [setNodeData, setShowChipDelete]);
 
-  const handleChipClick = (labelId) => {
-    showChipDelete === labelId ? setShowChipDelete(false) : setShowChipDelete(labelId);
-  };
-
-  const handleNodeInfoUpdate = (updateNode) => {
-    setNodeData((prevData) => {
-      const updatedNodeData = {
-        ...prevData,
-        nodeId: updateNode.nodeId !== undefined ? updateNode.nodeId : prevData.nodeId,
-        fileName: updateNode.fileName !== undefined ? updateNode.fileName : prevData.fileName,
-        attribute: updateNode.attribute !== undefined ? updateNode.attribute : prevData.attribute,
-        x: updateNode.x !== undefined ? updateNode.x : prevData.x,
-        y: updateNode.y !== undefined ? updateNode.y : prevData.y,
-      };
-      console.log(updatedNodeData);
-      return updatedNodeData;
-    });
-  };
+  const handleChipClick = useCallback((labelId) => {
+    setShowChipDelete((prev) => prev === labelId ? false : labelId);
+  }, []);
 
   return (
     <Dialog 
@@ -198,7 +230,7 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
     >
       <Tabs value={value} onChange={handleTabChange} aria-label="tabs">
         <Tab label="一般設定" />
-        <Tab label="標籤管理" />
+        {/* <Tab label="標籤管理" /> */}
         {/* <Tab label="新增標籤" /> */}
       </Tabs>
       {/* <TabPanel value={value} index={0}>
@@ -236,10 +268,10 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
               </div>
             </DialogTitle>
             <DialogContent>
-            {nodeLabels.current && nodeLabels.current.length > 0 && (
+            {nodeLabels && nodeLabels.length > 0 && (
               <>
                 <Divider variant="middle" style={{ margin: '1rem 0' }} />
-                {nodeLabels.current.map((label) => (
+                {nodeLabels.map((label) => (
                   <div key={label.labelId} style={{ display: 'inline-block', marginRight: '0.25rem' , marginRight: '0.25rem', marginTop: '0.5rem' }}>
                     <Chip
                       label={label.labelName}

@@ -202,6 +202,7 @@ const createWindow = () => {
     width: 1920,
     height: 1080,
     resizable: true,
+    maximizable: true,
     fullscreenable: true,
     // icon: `${__dirname}/dist/assets/imgs/logo.png`, // 使用绝对路径
     // backgroundColor: 'blue',
@@ -224,7 +225,7 @@ const createWindow = () => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   // 窗口要关闭的时候触发
   mainWindow.on('close', (e) => {

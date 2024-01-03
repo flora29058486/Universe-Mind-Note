@@ -77,7 +77,7 @@ const AddNewLabel = ({ currentNode, onclose, addLabel }) => {
     if (attribute.labelName) {
       handleAddAttribute(attribute);
     };
-    addIconPanel(false);
+    setAddIconPanel(false);
     onclose(false);
   };
 

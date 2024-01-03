@@ -2,7 +2,6 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import ToggleButtonOnMainKonva from './components/MUI/ToggleButtonOnMainKonva/ToggleButtonOnMainKonva.jsx';
 import Toolbar from './components/Toolbar/Toolbar.jsx';
 import Grid from '@mui/material/Grid';
-import './App.css';
 import { SaveUserData } from './components/SaveUserData/SaveUserData.js';
 import { WhiteBoard } from './components/WhiteBoard/WhiteBoard.js';
 import { LabelsProvider } from './components/Context/LabelContext.js'; 

@@ -36,7 +36,7 @@ const useStyles = makeStyles({
 function AddExistLabelPanel({ currentNode }) {
   const classes = useStyles();
   const { labels } = useLabels();
-  const { nodes } = useNodes();
+  const { nodes, setNodes } = useNodes();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredLabels, setFilteredLabels] = useState([]);
@@ -69,6 +69,24 @@ function AddExistLabelPanel({ currentNode }) {
     }
   }, [searchTerm, labels, currentNode]);
 
+  const handleAddOldLabel = (label) => {
+    const node = nodes.find(node => node.nodeId === currentNode.nodeId);
+    // 設定無法重複新增相同標籤
+    setFilteredLabels(prevLabels => prevLabels.filter(prevLabel => prevLabel.labelId !== label.labelId));
+    setNodes(prevNodes => {
+      return prevNodes.map(prevNode => {
+        if (prevNode.nodeId === currentNode.nodeId) {
+          return {
+            ...prevNode,
+            attribute: [...prevNode.attribute, label],
+          };
+        } else {
+          return prevNode;
+        }
+      });
+    });
+  };
+
   return (
     <Paper className={classes.paper}>
       <Box padding={2}>
@@ -100,7 +118,7 @@ function AddExistLabelPanel({ currentNode }) {
             <React.Fragment key={label.labelId}>
               {index > 0 && <Divider component="li" />}
               <ListItem>
-                <ListItemButton onClick={() => handleToggle(label.labelId)}>
+                <ListItemButton onClick={() => handleAddOldLabel(label)}>
                   <ListItemIcon>
                     <div style={{
                       width: '16px',

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useId, useCallback } from 'react';
 import { Stage, Layer, Circle, Rect } from "react-konva";
 import { v4 as uuidv4 } from 'uuid';
+import { throttle } from 'lodash-es';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 
@@ -160,21 +161,25 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
   }, [labels]);
 
   // resize window
+  // 使用 useCallback 创建一个稳定的 handleResize 函数
+  const handleResize = useCallback(throttle(() => {
+    setStageSize({ width: window.innerWidth, height: window.innerHeight });
+
+    if (stageRef.current) {
+      console.log(stageRef.current)
+      stageRef.current.draw();
+    }
+  }, 200), []);
+
   useEffect(() => {
-    const handleResize = () => {
-      setStageSize({ width: window.innerWidth, height: window.innerHeight });
-      // setStageProps({ ...stageProps, width: window.innerWidth, height: window.innerHeight})
-
-      if (stageRef.current) {
-        console.log(stageRef.current)
-        stageRef.current.draw();
-      }
-    };
-
     window.addEventListener('resize', handleResize);
 
-    return () => window.removeEventListener('resize', handleResize);
-  }, [stageSize]);
+    // 清理函数
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      handleResize.cancel(); // 如果有正在等待的节流函数，取消它
+    };
+  }, [handleResize]);
   
   const handleDragStart = (e) => {
     e.cancelBubble = true;
@@ -311,7 +316,7 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
         }}
       >
         <MenuItem onClick={handleNodeDetailInfo}>詳細資料</MenuItem>
-        <MenuItem onClick={handleContextMenuClose}>標籤管理</MenuItem>
+        {/* <MenuItem onClick={handleContextMenuClose}>標籤管理</MenuItem> */}
         <MenuItem onClick={handleAddLabelDetailInfo}>新增標籤</MenuItem>
         <MenuItem onClick={handleDeleteNode}>刪除</MenuItem>
       </Menu>
