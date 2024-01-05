@@ -50,6 +50,7 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
   const [folderDialogNode, setFolderDialogNode] = useState(null);
   // window size
   const [stageSize, setStageSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [stageScale, setStageScale] = useState(1);
   const stageRef = useRef(null);
   // 文字方塊
   const [texts, setTexts] = useState([]);
@@ -190,6 +191,26 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
     }
   }, 200), []);
 
+  // wheel zoom event listener
+  useEffect(() => {
+    const handleWheel = (e) => {
+      const stage = stageRef.current;
+  
+      const zoomFactor = e.deltaY > 0 ? 0.97 : 1.03;
+      setStageScale(prevScale => {
+        const newScale = prevScale * zoomFactor;
+        return Math.max(0.5, Math.min(1.8, newScale));
+      });
+      stage.batchDraw();
+    };
+
+    window.addEventListener('wheel', handleWheel);
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
   useEffect(() => {
     window.addEventListener('resize', handleResize);
 
@@ -326,6 +347,7 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
       <Stage
         width={stageSize.width} 
         height={stageSize.height}
+        scale={{x: stageScale, y: stageScale}}
         draggable={true}
         ref={stageRef}
         id='stage'
@@ -334,11 +356,10 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
         onContextMenu={handleContextMenu}
       >
         <BackLayerRender
-          // width, height - padding*scale
-          width={stageSize.width + 2*padding} 
-          height={stageSize.height + 2*padding} 
-          positionx={position.x + padding}
-          positiony={position.y + padding}
+          width={(stageSize.width + 2*padding)/stageScale} 
+          height={(stageSize.height + 2*padding)/stageScale} 
+          positionx={(position.x + padding)/stageScale}
+          positiony={(position.y + padding)/stageScale}
           step={step}
         />
         <DrawExistingNode
