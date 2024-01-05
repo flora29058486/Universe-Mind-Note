@@ -11,7 +11,7 @@ export const NodeProvider = ({ children, initialNodes }) => {
 
   useEffect(() => {
     if (initialNodes) {
-      console.log("Initial nodes:", initialNodes);
+      // console.log("Initial nodes:", initialNodes);
       setNodes(initialNodes);
     }
   }, [initialNodes]);

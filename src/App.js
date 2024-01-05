@@ -15,6 +15,7 @@ export default function App() {
 
   // 螢幕左方工具列
   const [toolSelect, setToolSelect] = useState('');
+  const [toolUsed, setToolUsed] = useState(false);
   // 畫布上的按鈕
   const [toggleButton, setToggleButton] = useState('');
   const [fileDrag, setFileDrag] = useState([]);
@@ -23,6 +24,9 @@ export default function App() {
 
   // request StageRef when app end
   const [stageSave, setStageSave] = useState(0);
+  // textLayerData
+  const [textLayerOnLoad, setTextLayerOnLoad] = useState(null);
+  const [textLayerData, setTextLayerData] = useState(null);
 
   // const [userData, setUserData] = useState(null);
 
@@ -33,24 +37,21 @@ export default function App() {
     preUserData = JSON.parse(preUserData);
 
     if (Object.keys(preUserData).length === 0) {
-      setUserDataNode([]);
-      setUserDataLabel([]);
+      if (preUserData.nodes === undefined) {
+        setUserDataNode([]);
+      };
+      if (preUserData.labels === undefined) {
+        setUserDataLabel([]);
+      };
+      if (preUserData.text === undefined) {
+        setTextLayerOnLoad([]);
+      };
       return;
     } else {
       setUserDataNode(preUserData.nodes);
       setUserDataLabel(preUserData.labels);
+      setTextLayerOnLoad(preUserData.text);
     }
-    
-    // console.log(preUserData);
-
-    // // prevent if stageP is not define
-    // if (preUserData.stage === undefined) {
-    //   return;
-    // } else {
-    //   let stageP = JSON.parse(preUserData.stage);
-    //   console.log(stageP);
-    //   // setUserData(stageP);
-    // }
   };
 
   useEffect(() => {
@@ -77,19 +78,28 @@ export default function App() {
     // console.log(konvaStageJson);
   }, []);
 
+  const handleTextLayerSave = useCallback((textLayer) => {
+    setTextLayerData(textLayer);
+  }, []);
+
   useEffect(() => {
 
   }, [fileDrag]);
 
-  // 子组件接收值
+  // 工具列選擇 ToggleButtonOnMainKonva 參數設定
   const handleToolSelect = useCallback((button) => {
 
     setToolSelect(button);
   }, []);
 
   const handleToggleButtonSelect = useCallback((tool) => {
-
+    setToolUsed(false);
     setToggleButton(tool);
+  }, []);
+
+  const handleToolUsed = useCallback(() => {
+    setToolUsed(true);
+    setToggleButton('');
   }, []);
 
   const handleDropOutside = useCallback((e) => {
@@ -113,9 +123,9 @@ export default function App() {
     userDataNode && userDataLabel && (
       <LabelsProvider initialLabels={userDataLabel}>
       <NodeProvider initialNodes={userDataNode}>
-        <SaveUserData onStateChange={handleStateChange} konvaStageJson={konvaStageJson} />
+        <SaveUserData onStateChange={handleStateChange} konvaStageJson={konvaStageJson} textLayerData={textLayerData} />
         <Grid container sx={{ overflow: 'hidden', position: 'relative', flexWrap: 'nowrap' }}>
-          <ToggleButtonOnMainKonva onToggleButtonSelect={handleToggleButtonSelect}/>
+          <ToggleButtonOnMainKonva onToggleButtonSelect={handleToggleButtonSelect} toolUsed={toolUsed}/>
           {/* 左邊的 Grid */}
           {
             toolSelect
@@ -159,9 +169,12 @@ export default function App() {
                 <div id="konva-container" onDrop={handleDropOutside} onDragOver={(e) => e.preventDefault()}>
                   <WhiteBoard
                     stageSave={stageSave}
+                    textLayerSave={handleTextLayerSave}
+                    textLaterLoad={textLayerOnLoad}
                     onStageRefChange={handleStageRefChange}
                     fileDrop={fileDrag}
                     toggleButton={toggleButton}
+                    toolUsed={handleToolUsed}
                     dropClientPosition={dropClientPosition}
                   />
                 </div>
@@ -179,9 +192,12 @@ export default function App() {
                 <div id="konva-container" onDrop={handleDropOutside} onDragOver={(e) => e.preventDefault()}>
                   <WhiteBoard
                     stageSave={stageSave}
+                    textLayerSave={handleTextLayerSave}
+                    textLaterLoad={textLayerOnLoad}
                     onStageRefChange={handleStageRefChange}
                     fileDrop={fileDrag}
                     toggleButton={toggleButton}
+                    toolUsed={handleToolUsed}
                     dropClientPosition={dropClientPosition}
                   />
                 </div>

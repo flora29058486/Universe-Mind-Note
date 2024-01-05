@@ -268,7 +268,16 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
                       borderRadius: '50%'
                     }} />
                   </ListItemIcon>
-                  <ListItemText primary={<Typography variant="body1">{label.labelName}</Typography>} />
+                  <ListItemText primary={
+                    <Typography variant="body1" style={{
+                      maxWidth: '100%', // 根据您的布局调整这个宽度
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {label.labelName}
+                    </Typography>
+                  } />
                 </ListItemButton>
               )}
               </ListItem>
@@ -277,11 +286,19 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
         </List>
         {searchTerm !== '' && (
           <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', ml: 3, pb: 3 }}>
-            <Button onClick = {(e) => updatePopoverStyle(e)} sx={{ alignSelf: 'flex-start' }}>
+            <Typography variant="body1" sx={{ mb:1 }}>
+              新增標籤：
+            </Typography>
+            <Button onClick = {(e) => updatePopoverStyle(e)} sx={{ alignSelf: 'flex-start', maxWidth: '95%' }}>
               <LocalOfferIcon></LocalOfferIcon>
               <span style={{ marginRight: '1rem' }}></span>
-              <Typography variant="body1">
-                新增標籤："{searchTerm}"
+              <Typography variant="body1" style={{
+                // maxWidth: 'calc(80%)', // 根据您的布局调整这个宽度
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}>
+                {searchTerm}
               </Typography>
             </Button>
             {newLabelColor ? (

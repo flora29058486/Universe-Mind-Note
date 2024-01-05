@@ -275,6 +275,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
               offsetX={circleRadius} // 水平居中
               wrap="char" // 換行
               ellipsis={true} // 省略號
+              listening={false} // 不接收事件
             />
           </Group>
         ))}

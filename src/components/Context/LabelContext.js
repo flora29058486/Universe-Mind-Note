@@ -9,7 +9,7 @@ export const LabelsProvider = ({ children, initialLabels }) => {
   const [labels, setLabels] = useState([]);
 
   useEffect(() => {
-    console.log(initialLabels)
+    // console.log(initialLabels)
     if (initialLabels) {
       setLabels(initialLabels);
     }

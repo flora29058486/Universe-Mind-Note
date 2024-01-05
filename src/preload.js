@@ -19,8 +19,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeRequestSaveData: (callback) => {
     ipcRenderer.removeListener('request-save-data', callback);
   },
-  saveUserData: ({ labels, nodes, stage }) => {
-    ipcRenderer.send('save-user-data', { labels, nodes, stage });
+  saveUserData: ({ labels, nodes, stage, text }) => {
+    ipcRenderer.send('save-user-data', { labels, nodes, stage, text });
   },
   loadFolder: async () => { 
     const files = await ipcRenderer.invoke('dialog:openFolder');

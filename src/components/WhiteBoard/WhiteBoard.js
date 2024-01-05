@@ -8,6 +8,7 @@ import MenuItem from '@mui/material/MenuItem';
 
 import { BackLayerRender } from "./BackLayerRender";
 import DrawExistingNode from "./DrawExistingNode.jsx";
+import ImageTextLayer from './ImageTextLayer.js';
 import NodeDialog from '../NodeDetailInfo/NodeDialog.js';
 import AddLabelDialog from '../NodeDetailInfo/AddLabelDialog.js';
 import FolderDialog from './FolderDialog/FolderDialog.js';
@@ -31,7 +32,7 @@ function generateBackgroundLayer() {
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton, dropClientPosition }) => {
+export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRefChange, fileDrop, toggleButton, toolUsed, dropClientPosition }) => {
 
   const prevFileDrop = useRef(fileDrop);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -50,7 +51,10 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
   // window size
   const [stageSize, setStageSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const stageRef = useRef(null);
-  
+  // 文字方塊
+  const [texts, setTexts] = useState([]);
+  const [editingTextId, setEditingTextId] = useState(null);
+
   // context
   const { labels, setLabels } = useLabels();
   const { nodes, setNodes, addNode, deleteNode } = useNodes();
@@ -62,7 +66,22 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
       onStageRefChange(stageRef.current);
     }
   }, [stageSave]);
-    
+
+  // 讀取關閉前文字與圖片圖層
+  useEffect(() => {
+    if (!textLaterLoad) return;
+    setTexts(textLaterLoad);
+  }, [textLaterLoad]);
+
+  // 紀錄文字圖層
+  useEffect(() => {
+    const canvasState = stageRef.current.toJSON();
+    const parse = JSON.parse(canvasState);
+    const textLayerGroups = parse.children[3].children;
+    const textLayer = textLayerGroups.map(group => { return group.children[0].attrs });
+    textLayerSave(textLayer);
+  }, [texts]);
+
   const generateNodes = (dropNodes, nodePosition) => {
     const fileCount = dropNodes.length;
     const squareSize = Math.ceil(Math.sqrt(fileCount));
@@ -180,6 +199,16 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
       handleResize.cancel(); // 如果有正在等待的节流函数，取消它
     };
   }, [handleResize]);
+
+  // 新增文字方塊
+  const addText = (newText) => {
+    setTexts(prevTexts => [...prevTexts, newText]);
+  };
+
+  const updateText = (id, newText) => {
+    // console.log('updateText', id, newText)
+    setTexts(prevTexts => prevTexts.map(text => text.id === id ? { ...text, ...newText } : text));
+  };
   
   const handleDragStart = (e) => {
     e.cancelBubble = true;
@@ -194,8 +223,21 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
 
     if (toggleButton === "create-folder" && e.evt.button === 0) {
       const NodesGenerate = generateFolderNode(pos);
-
+      toolUsed('');
       addNode(NodesGenerate);
+    } else if (toggleButton === "create-text" && e.evt.button === 0) {
+      const newText = {
+        x: pos.x,
+        y: pos.y,
+        text: "新的文字方塊",
+        fontSize: 20,
+        fill: 'black',
+        align: 'left',
+        id: uuidv4(),
+      };
+      setEditingTextId(newText.id);
+      toolUsed('');
+      addText(newText); // 添加到文本数组状态
     }
   }, [toggleButton, generateFolderNode, addNode]);
 
@@ -206,10 +248,10 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
     // 獲取拖動結束後的位置
     const position = e.target.position();
     const rel = e.target.getRelativePointerPosition();
-    console.log(e.target);
+    // console.log(e.target);
 
 
-    console.log("position", position);
+    // console.log("position", position);
     // 更新位置狀態
     setPosition({ x: position.x, y: position.y });
   };
@@ -275,6 +317,10 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
     setFolderDialogNode(null);
   }, []);
 
+  const handleDeleteText = useCallback((textId) => {
+    setTexts(prevTexts => prevTexts.filter(text => text.id !== textId));
+  }, []);
+
   return (
     <div>
       <Stage
@@ -299,6 +345,12 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
           nodeInfo={nodes}
           circleRadius={60}
           onFolderOpen={handleFolderDialogOpen}
+        />
+        <ImageTextLayer
+          texts={texts}
+          currentTextId={editingTextId}
+          onUpdateText={updateText}
+          onDeleteText={handleDeleteText}
         />
       </Stage>
       <Menu
@@ -340,6 +392,5 @@ export const WhiteBoard = ({ stageSave, onStageRefChange, fileDrop, toggleButton
         />
       )}
     </div>
-    
   );
 };

@@ -11,10 +11,10 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-async function saveData(labels, nodes, stage) {
+async function saveData(labels, nodes, stage, text) {
   try {
     // 將數據轉換為 JSON 字符串
-    const dataToSave = JSON.stringify({ labels, nodes, stage }, null, 2); // 使用參數讓輸出更易於閱讀
+    const dataToSave = JSON.stringify({ labels, nodes, stage, text }, null, 2); // 使用參數讓輸出更易於閱讀
 
     // 異步地寫入數據到文件
     const userDataPath = (app || remote.app).getPath('userData');
@@ -183,9 +183,9 @@ const handleLoadFileIcon = async (_, filePath) => {
 
 const createWindow = () => {
   // Save User Data
-  ipcMain.on('save-user-data', async (event, { labels, nodes, stage }) => {
+  ipcMain.on('save-user-data', async (event, { labels, nodes, stage, text }) => {
     // 這裡執行保存數據的邏輯
-    await saveData(labels, nodes, stage);
+    await saveData(labels, nodes, stage, text);
   });
   // load userData
   ipcMain.handle('user-data-loaded', handleLoadUserData);
@@ -225,7 +225,7 @@ const createWindow = () => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 
   // 窗口要关闭的时候触发
   mainWindow.on('close', (e) => {
