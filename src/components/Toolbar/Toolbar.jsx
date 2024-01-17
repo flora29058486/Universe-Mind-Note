@@ -14,6 +14,7 @@ import Grid from '@mui/material/Grid';
 
 import FileTreeView from './FileImport/FileTreeView.jsx';
 import LabelManager from './LabelManager/LabelManager.js';
+import NotionPageList from '../Extensions/notion/NotionPageList.js';
 import { useLabels } from '../Context/LabelContext.js';
 
 function Toolbar({onToolSelect}) {
@@ -131,6 +132,9 @@ function Toolbar({onToolSelect}) {
             onMergeLabels={mergeLabels}
             onUpdateLabel={updateLabel}
           />
+        )}
+        {selectedButton === 'Extensions' && (
+          <NotionPageList />
         )}
       </Grid>
     </Grid>

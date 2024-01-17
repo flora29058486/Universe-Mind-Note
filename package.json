@@ -2,6 +2,10 @@
   "name": "universe-mind-note",
   "productName": "UMN",
   "version": "1.0.0",
+  "author": {
+    "name": "flora29058486",
+    "email": "y91121604@gmail.com"
+  },
   "description": "My Electron application description",
   "main": ".webpack/main",
   "scripts": {
@@ -12,10 +16,6 @@
     "lint": "echo \"No linting configured\""
   },
   "keywords": [],
-  "author": {
-    "name": "flora29058486",
-    "email": "y91121604@gmail.com"
-  },
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.23.2",
@@ -45,6 +45,8 @@
     "@mui/material": "^5.14.17",
     "@mui/styles": "^5.14.18",
     "@mui/x-tree-view": "^6.17.0",
+    "@notionhq/client": "^2.2.14",
+    "dotenv": "^16.3.1",
     "electron-squirrel-startup": "^1.0.0",
     "file-loader": "^6.2.0",
     "konva": "^9.2.3",
@@ -58,6 +60,7 @@
     "react-konva": "^18.2.10",
     "react-konva-utils": "^1.0.5",
     "url-loader": "^4.1.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "webpack": "^5.89.0"
   }
 }

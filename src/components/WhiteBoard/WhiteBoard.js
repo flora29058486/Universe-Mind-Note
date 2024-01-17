@@ -32,9 +32,10 @@ function generateBackgroundLayer() {
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRefChange, fileDrop, toggleButton, toolUsed, dropClientPosition }) => {
+export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRefChange, fileDropType, fileDrop, toggleButton, toolUsed, dropClientPosition }) => {
 
   const prevFileDrop = useRef(fileDrop);
+  const fileDropTypeRef = useRef(fileDropType);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   // NodeContextMenu
   const [contextMenu, setContextMenu] = useState(null);
@@ -106,24 +107,42 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
     return NodesGenerate;
   };
 
-  const updateNodeInfo = (dropNodes) => {
-    const updatedNodeInit = dropNodes.map(filepath => {
-      const fileNameWithExtension = filepath.split('\\').pop();
-      const fileExtension = fileNameWithExtension.split('.').pop();
-      const fileName = fileNameWithExtension.replace('.' + fileExtension, '');
+  const updateNodeInfo = (dropNodes, nodeType) => {
+    let updatedNodeInit;
 
-      return {
-        nodeId: uuidv4(),
-        fileName: fileName,
-        filepath: filepath,
-        nodeType: 'normal',
-        nodeIcon: ((fileExtension !== fileName) ? fileExtension : ''),
-        attribute: [],
-        childNode: [],
-        x: null,
-        y: null,
-      };
-    });
+    if (nodeType === 'normal') {
+      updatedNodeInit = dropNodes.map(filepath => {
+        const fileNameWithExtension = filepath.split('\\').pop();
+        const fileExtension = fileNameWithExtension.split('.').pop();
+        const fileName = fileNameWithExtension.replace('.' + fileExtension, '');
+
+        return {
+          nodeId: uuidv4(),
+          fileName: fileName,
+          filepath: filepath,
+          nodeType: 'normal',
+          nodeIcon: ((fileExtension !== fileName) ? fileExtension : ''),
+          attribute: [],
+          childNode: [],
+          x: null,
+          y: null,
+        };
+      });
+    } else if (nodeType === 'notion') {
+      updatedNodeInit = dropNodes.map(page => {
+        return {
+          nodeId: uuidv4(),
+          fileName: page.fileName,
+          filepath: page.filepath,
+          nodeType: 'notion',
+          nodeIcon: 'notion',
+          attribute: [],
+          childNode: [],
+          x: null,
+          y: null,
+        }
+      });
+    }
 
     let nodePosition = { x: dropClientPosition.x - position.x, y: dropClientPosition.y - position.y };
 
@@ -162,8 +181,14 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
   }, [setNodes]);
 
   useEffect(() => {
+    if (fileDropTypeRef.current !== fileDropType) {
+      fileDropTypeRef.current = fileDropType;
+    }
+  }, [fileDropType]);
+
+  useEffect(() => {
     if (prevFileDrop.current !== fileDrop) {
-      updateNodeInfo(fileDrop);
+      updateNodeInfo(fileDrop, fileDropTypeRef.current);
       prevFileDrop.current = fileDrop;
     }
   }, [fileDrop, position.x, position.y]);
@@ -364,7 +389,7 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
         />
         <DrawExistingNode
           nodeInfo={nodes}
-          circleRadius={60}
+          circleRadius={48}
           onFolderOpen={handleFolderDialogOpen}
         />
         <ImageTextLayer

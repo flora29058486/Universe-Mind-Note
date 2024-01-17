@@ -40,4 +40,31 @@ contextBridge.exposeInMainWorld('electronAPI', {
       throw error;
     }
   },
+  // 打開預設瀏覽器上的網站
+  openUrl: async (url) => {
+    try {
+      // 使用 ipcRenderer 來發送 'main:openURL' 請求到主進程
+      await ipcRenderer.invoke('main:openURL', url);
+    } catch (error) {
+      console.error('Error while opening url via electronAPI:', error);
+      throw error;
+    }
+  },
+  // 使用 ipcRenderer 來發送 'get-env-var' 請求到主進程
+  getEnvVar: async (key) => {
+    try {
+      // console.log('get-env-var', key);
+      const value = await ipcRenderer.invoke('get-env', key);
+      return value;
+    } catch (error) {
+      console.error('Error while getting env var via electronAPI:', error);
+      throw error;
+    }
+  },
+  notionPageReceived: (callback) => {
+    ipcRenderer.on('notion-page-received', (_event, value) => callback(value));
+  },
+  removeNotionPageReceived: (callback) => {
+    ipcRenderer.removeListener('notion-page-received', callback);
+  },
 })

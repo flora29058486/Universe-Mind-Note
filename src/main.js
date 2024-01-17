@@ -1,7 +1,8 @@
-const { app, remote, BrowserWindow, ipcMain, dialog, Tray, Menu } = require('electron');
+const { app, remote, BrowserWindow, ipcMain, dialog, Tray, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 const { exec } = require('child_process');
+const { Client } = require("@notionhq/client")
 // const nativeImage = require('electron').nativeImage
 
 let isDataSaved = false;
@@ -10,6 +11,8 @@ let isDataSaved = false;
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
+
+// require('dotenv').config();
 
 async function saveData(labels, nodes, stage, text) {
   try {
@@ -181,6 +184,102 @@ const handleLoadFileIcon = async (_, filePath) => {
   }
 }
 
+let mainWindow;
+
+// 防止開啟第二個app視窗
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient('electron-fiddle', process.execPath, [path.resolve(process.argv[1])])
+  }
+} else {
+    app.setAsDefaultProtocolClient('electron-fiddle')
+}
+
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (event, argv, workingDirectory) => {
+    // Windows系统下，可以通过argv参数获取URL
+    // macOS下，您可能需要使用app.on('open-url')事件
+
+    const url = argv.find(arg => arg.startsWith('electron-umn://'));
+    if (url) {
+      const token = new URL(url).searchParams.get('token');
+      let token_json = JSON.parse(token);
+      // console.log(token_json);
+      // Notion token received
+      const notion_access_token = token_json.access_token;
+
+      const fetchNotionData = async () => {
+        // 初始化客户端
+        const notion = new Client({ auth: notion_access_token });
+        async function getAllPages() {
+          const response = await notion.search({
+            filter: { property: 'object', value: 'page' }
+          });
+          return response.results;
+        }
+        try {
+          // 處理回傳的用戶頁面
+          const organizeAndSortNotionPages = async () => {
+            try {
+              const pages = await getAllPages();
+              // console.log(pages);
+              const organizedPages = pages.map(page => {
+
+                function findPropertyWithId(properties, searchId) {
+                  for (const key in properties) {
+                      if (properties[key].id === searchId) {
+                          const title = properties[key].title[0];
+                          if (title) {
+                            // console.log("title.title", title);
+                            return title.plain_text;
+                          } else {
+                            return "沒找到這篇標題";
+                          }
+                      }
+                  }
+                  return "沒找到這篇標題";
+                }
+
+                const title = findPropertyWithId(page.properties, 'title');
+
+                // const newTitle = process_title(title);
+          
+                return {
+                  lastEditedTime: new Date(page.last_edited_time),
+                  id: page.id,
+                  url: page.url,
+                  title: title
+                };
+              });
+          
+              // 按最后编辑时间排序
+              return organizedPages.sort((a, b) => b.lastEditedTime - a.lastEditedTime);
+            } catch (error) {
+              console.error('Error fetching or organizing pages:', error);
+            }
+          };
+
+          organizeAndSortNotionPages().then(sortedPages => {
+            // console.log(sortedPages);
+            mainWindow.webContents.send('notion-page-received', sortedPages);
+          });
+  
+        } catch (error) {
+          console.error('Error fetching users:', error);
+        }
+      };
+
+      if (notion_access_token) {
+        fetchNotionData();
+      }
+    }
+  });
+};
+
 const createWindow = () => {
   // Save User Data
   ipcMain.on('save-user-data', async (event, { labels, nodes, stage, text }) => {
@@ -195,9 +294,18 @@ const createWindow = () => {
   ipcMain.handle('main:openFile', handleOpenFile);
   // Load FileIcon
   ipcMain.handle('main:loadIcon', handleLoadFileIcon);
-  
+  // Open URL
+  ipcMain.handle('main:openURL', (event, url) => {
+    shell.openExternal(url);
+  });
+  // 回傳環境變數的值
+  ipcMain.handle('get-env', (event, arg) => {
+    // const value = process.env[arg];
+    return OAUTH_REDIRECT_URI;
+  });
+
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     show: false,
     width: 1920,
     height: 1080,
@@ -225,7 +333,7 @@ const createWindow = () => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   // 窗口要关闭的时候触发
   mainWindow.on('close', (e) => {

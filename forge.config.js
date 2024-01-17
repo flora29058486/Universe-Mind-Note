@@ -1,24 +1,20 @@
 module.exports = {
   packagerConfig: {
     asar: true,
+    icon: "./icons8-nebula.ico",
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        name: "UniverseMindNote",
+        setupExe: "UMNSetup.exe",
+        setupIcon: "./icons8-nebula-16.ico",
+      },
     },
     {
       name: '@electron-forge/maker-zip',
-      platforms: ['darwin'],
-    },
-    {
-      name: '@electron-forge/maker-deb',
-      config: {},
-    },
-    {
-      name: '@electron-forge/maker-rpm',
-      config: {},
     },
   ],
   plugins: [
@@ -39,7 +35,6 @@ module.exports = {
               name: 'main_window',
               preload: {
                 js: './src/preload.js'
-                // js: "./src/renderer/Konva/MainKonva/MainKonva.js",
               },
             },
           ],

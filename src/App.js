@@ -18,6 +18,7 @@ export default function App() {
   const [toolUsed, setToolUsed] = useState(false);
   // 畫布上的按鈕
   const [toggleButton, setToggleButton] = useState('');
+  const [fileDropType, setFileDropType] = useState('');
   const [fileDrag, setFileDrag] = useState([]);
   const [dropClientPosition, setDropClientPosition] = useState({ x: 0, y: 0 });
   const [konvaStageJson, setKonvaStageJson] = useState(null);
@@ -84,7 +85,7 @@ export default function App() {
 
   useEffect(() => {
 
-  }, [fileDrag]);
+  }, [fileDrag, fileDropType]);
 
   // 工具列選擇 ToggleButtonOnMainKonva 參數設定
   const handleToolSelect = useCallback((button) => {
@@ -108,16 +109,24 @@ export default function App() {
     setDropClientPosition({ x: e.clientX, y: e.clientY });
 
     const isFileFromTreeView = e.dataTransfer.getData('isFileFromTreeView') ? e.dataTransfer.getData('isFileFromTreeView') : false;
+    const isFileFromNotionExtension = e.dataTransfer.getData('isFileFromNotionExtension') ? e.dataTransfer.getData('isFileFromNotionExtension') : false;
 
     if (isFileFromTreeView) {
       const filesJSON = e.dataTransfer.getData('dragFiles');
       const files = JSON.parse(filesJSON);
       setFileDrag(files);
+      setFileDropType('normal');
       e.dataTransfer.clearData(['isFileFromTreeView']);
+    } else if (isFileFromNotionExtension) {
+      const filesJSON = e.dataTransfer.getData('notionPages');
+      const files = JSON.parse(filesJSON);
+      setFileDrag(files);
+      setFileDropType('notion');
+      e.dataTransfer.clearData(['isFileFromNotionExtension']);
     } else {
       return;
     }
-  }, [dropClientPosition]);
+  }, [dropClientPosition, setFileDrag, setFileDropType]);
 
   return (
     userDataNode && userDataLabel && (
@@ -172,6 +181,7 @@ export default function App() {
                     textLayerSave={handleTextLayerSave}
                     textLaterLoad={textLayerOnLoad}
                     onStageRefChange={handleStageRefChange}
+                    fileDropType={fileDropType}
                     fileDrop={fileDrag}
                     toggleButton={toggleButton}
                     toolUsed={handleToolUsed}
@@ -195,6 +205,7 @@ export default function App() {
                     textLayerSave={handleTextLayerSave}
                     textLaterLoad={textLayerOnLoad}
                     onStageRefChange={handleStageRefChange}
+                    fileDropType={fileDropType}
                     fileDrop={fileDrag}
                     toggleButton={toggleButton}
                     toolUsed={handleToolUsed}

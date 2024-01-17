@@ -185,7 +185,7 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
   };
 
   return (
-    <Paper className={classes.paper}>
+    <Paper className={classes.paper} onWheel={e => e.stopPropagation()}>
       <Box padding={2}>
         <TextField
           id="filled-search"

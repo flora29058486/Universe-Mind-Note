@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { TreeItem, TreeView } from '@mui/x-tree-view';
 import FolderIcon from '@mui/icons-material/Folder';
 import { makeStyles } from '@mui/styles';
-import { Paper } from '@mui/material';
+import { Paper, Button } from '@mui/material';
 import DescriptionIcon from '@mui/icons-material/Description';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
@@ -15,8 +15,9 @@ const useStyles = makeStyles({
     height: '100%', /* 設置最大高度 */
   },
   fileListContainer: {
-    height: 'calc(98vh - 24px)', /* 設置最大高度 */
+    height: 'calc(98vh - 40px)', /* 設置最大高度 */
     overflowY: 'auto', /* 啟用垂直滾動條 */
+    marginTop: '8px', /* 設置距離上方的距離 */
     // overflowX: 'hidden', /* 禁用水平滾動條 */
     "&::-webkit-scrollbar": {
       width: '10px', /* 滾動條寬度 */
@@ -139,10 +140,13 @@ export default function FileTreeView() {
   };
 
   return (
-    <Paper className={classes.treeview}>
+    <Paper className={classes.treeview} onWheel={e => e.stopPropagation()} sx={{ display: 'flex', flexDirection: 'column' }}>
       {dragFiles && <FileDragToKonva files={dragFiles} />}
-      <RefreshIcon onClick={handleRefresh} />
-      <CreateNewFolderIcon onClick={handleFolderImport}/>
+      {/* <RefreshIcon onClick={handleRefresh} /> */}
+      <Button variant="contained" startIcon={<CreateNewFolderIcon/>} onClick={handleFolderImport} sx={{ mt: '8px', alignSelf: 'center' }}>
+        匯入檔案
+      </Button>
+      {/* <CreateNewFolderIcon onClick={handleFolderImport}/> */}
       <div className={classes.fileListContainer}>
         <TreeView 
           multiSelect 
@@ -150,7 +154,7 @@ export default function FileTreeView() {
           defaultExpandIcon={<ChevronRightIcon />}
           aria-label="multi-select"
           // defaultParentIcon={<FolderIcon />}
-          selected={selectedNode} 
+          selected={selectedNode}
           onNodeSelect={handleNodeSelect}
         >
           {fileStructure && renderTree(fileStructure)}

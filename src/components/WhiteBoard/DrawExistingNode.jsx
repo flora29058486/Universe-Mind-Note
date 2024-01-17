@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Circle, Layer, Text, Group } from 'react-konva';
+import { Circle, Layer, Text, Group, Rect } from 'react-konva';
 import { useNodes } from '../Context/NodeContext.js';
 
 const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
   const { nodes, setNodes, updateNodePosition, nodeIntoFolder } = useNodes();
+  // nodeOnhover interaction
+  const [hoverNodeId, setHoverNodeId] = useState(null);
+  const hoverTimeoutRef = useRef(null);
+  const [hoverNodeDetailInfo, setHoverNodeDetailInfo] = useState([]);
+  const [isDraggingNode, setIsDraggingNode] = useState(false);
+  // const [isMouseInsideCircle, setIsMouseInsideCircle] = useState(false);
+  // const [isMouseInsideSmallCircle, setIsMouseInsideSmallCircle] = useState(false);
+
   const [nodesInThisFile, setNodesInThisFile] = useState([]);
   const [previousShape, setPreviousShape] = useState(null);
   const [nodeMoving, setNodeMoving] = useState(null);
@@ -17,7 +25,9 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
       const filePath = node.filepath;
 
       if (node.nodeType === 'folder') {
-        fileIconBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA1klEQVR4nO2WXwrCMAzGK4jgDRLxBB7B3ULv5PTBMwlrFA8geAD/HGKJRIqbiJuCsG4P5oM+9eH7NUnbzzmTqZAeJgP2sGLCqxDq62KPN/ZwZA8zF0tMsHw3roAQSr4dTeMAeLgEkzoD3bg+e1wXIHtV12scQIpTftrX3XjIHk6PSsA8GoBEXKHKodVh3joBkOcsQfpzC5pQnmFSVqITgK8+YgBkLUAbQrVrKPYQkT3F2N1nxGUkyzBp4Ts+VwEI0hYDyaI+lhOkZSUiRbJzMK+NZKa/1R38hE+Lh2UeTwAAAABJRU5ErkJggg==";
+        fileIconBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAABg0lEQVR4nO3YzyvDcRzH8dfN3Un+gbWShJZEkiQtSRJaLCX8EVYODlKUww7IDr4H5SJyU3Pxa34Nm18HhzH7pty/4dte8ge8D+y72bs+r3rc38/rGzAzMzMz82q2haBtIWtb4F/k1pG3LTzmLITxH8vE8PIcA72QWcNMyQOeVkBPLWOupAEPUdBr91EspldRWZKA1BLotbfdBvJ+knyYKtjn1aj7vtcaEQMuF0Av2Ts/x0946iMZcsWAxBzolexWPXk3XhSQdjALFupkvoKv2wHybqxoIO0rOUTehssepDE9Qg0gB4SoAcSA1DA1gBwwSA0gBtwMUAOIAdf91AByQB81gBhw1UsNIAYke6gB5IAgNYC0/GU3NYAc0EUNIAZcdFIDiAHnHdQAckA7NYAYcNZGDSAGnLZQA8gBzdQAYkCiiRpADDgJUAPIAY3UAGLAcT01gBxQRw0gzdn3u/mjWpYzJ+6XX4u5jeqIE/e5+cMaliMn7nOzm1XTYoCZmZmZGX65b1fjrzHebGEuAAAAAElFTkSuQmCC";
+      } else if (node.nodeType === 'notion') {
+        fileIconBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAADeUlEQVR4nO3Ze+ieYxgH8M9+0bA5rAlRM3OYhAlppCGHRltp1GpjrUgNm2RhoZwV4h+UOTVbaiORkantj22smeSQOUTNKRQZI+e9uuv61dPb+zzv733f53l7n/p96/7vvu/r+t7PfX+v67kuRjGKgcQYHIipOB2zsADX4248huewBo/g/CqdGYdJOAnnYi6uxq14GM9iLbbgU/yIRhdjLQ4tw+EJeAJf4o8unWk1fsfXeA8b8Hx8ga3YHXMS+Ut6JfBCG0f+xvf4CJvwMp7Gg1iGq8KJs3EiDsPebWxOw7sZG89g324J/JrZKJ3UTJyKydhPdRiLhzJf4wuc0c1G2dP+ATP0FxeG3WT/X9yFPTvZoNWVWay/OATbMj68jaNHujjv7q/A+C4ULCnLcSGnM0PF0ju5CffiUazCK/GmPggB+avJ/k5c1AuBNHbgvjB+R8hoenAvYj3eibub1OSfEhWskVGpnggMwmiLMo0lRfsmJDcFutexGo/jftwS7ytF6YtxDk7BFEyMxzunbALvZzQ/ReTLMBtnRbQ+IoLhkHKwR9kESgn3HaJRJoEqMD4idlKr6Ti8wKdKCIyNzHN6SN18XIvbCvQ7yernEayabSzuJ4Fj8VPB/M057yGl1tsjyRueuw6XxoH0jcC8OMnfCtYsKbB3Q2be0hH4VDqBYSwoWJNO+cg6E2hEZjumzgQauLIuBHZgV4u1O0MuB57AFlyXs/7VuhAYwls5e8yrA4GEE+KHqFVafHAdCIifllb7pKy0FgRSVP04Z685dSAgUu3hakN2fBeVuoEnkPBkzn676kJgf3zbZu+lg0xAVCQqJ/BnhQRE+aRSAlsrJjCpqXzZKJvA7BIIpP+DMwuKukuqJJDwUgcE9sE1cerNc1MUPrnFmqGoxjWaxhVKIjAxMsqREFgUWeZX+BBv4jU8FY82D6nmc3M0SG7H8QVzOyaQcFrOg+43hnqxv2gACBzTq/3mu9qu29Lp6U6Iat606EXMirJMOrw78VnGdqpYd4xxcbeHN1kWhai9cBCOinrmeZGcLYyfmVQTegDLoxe2Lh769qiX5klp0Uh+dIWpXRosc/wy0v5AHlLj7r+Snfo51C4VjDdGlF4ZveN7cGM0Qy7AAUrA3LgCu6MFm7qVn0T0fiOuyvJM6TyVFy+P4Dgj7vnkuPejGIUBwP9w+kiX3uvrjAAAAABJRU5ErkJggg=="
       } else {
         fileIconBase64 = await window.electronAPI.loadIcon(filePath);
       };
@@ -50,7 +60,39 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
 
   }, [nodeInfo]);
 
+  // nodeOnhover
+  const generateAdditionalCircles = (count, radius) => {
+    return Array.from({ length: count }, (_, i) => {
+      const angle = 90 + (360 / count) * i;
+      const radian = (Math.PI / 180) * angle;
+      return {
+        x: radius * Math.cos(radian),
+        y: radius * Math.sin(radian),
+      };
+    });
+  };
+
+  useEffect(() => {
+    if (!hoverNodeId) return;
+
+    const node = nodes.find(n => n.nodeId === hoverNodeId);
+    if (!node || !node.attribute || node.attribute.length === 0) return;
+
+    // 如果 attribute 長度大於 6，則只取前六個
+    const attribute = node.attribute.slice(0, 6);
+    const position = generateAdditionalCircles(attribute.length, circleRadius*1.5);
+    // 使用 map 函數來轉換 position 數組並設置詳細信息
+    const returnInfo = position.map((pos, i) => ({
+      x: pos.x,
+      y: pos.y,
+      attribute: attribute[i],
+    }));
+    // console.log(returnInfo);
+    setHoverNodeDetailInfo(returnInfo);
+  }, [hoverNodeId, nodes, circleRadius, setHoverNodeDetailInfo]);
+
   const handleDragStart = (e) => {
+    setIsDraggingNode(true);
     e.target.moveTo(moveNodeTempLayerRef.current);
     
     const id = e.target.id();
@@ -95,7 +137,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
 
   const handleDragEnd = (e) => {
     e.cancelBubble = true;
-    
+    setIsDraggingNode(false);
     const pos = e.target.getStage().getPointerPosition();
     const existingNodeLayer = e.target.getStage().findOne('.existingNodeLayer');
     // console.log(e.target.attrs.id)
@@ -163,6 +205,59 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
     }
   };
 
+  const handleMouseEnter = (e, node) => {
+    // console.log("Enter big")
+    // setIsMouseInsideCircle(true);
+    const stage = e.target.getStage()
+    stage.container().style.cursor = 'pointer';
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoverNodeId(node.nodeId);
+    }, 325); // 延遲200毫秒
+  };
+
+  const handleMouseLeave = (e, node) => {
+    const stage = e.target.getStage();
+    stage.container().style.cursor = 'default';
+    setHoverNodeId(null);
+    setHoverNodeDetailInfo([]);
+    clearTimeout(hoverTimeoutRef.current);
+
+    
+    // console.log("Leave big")
+    // setIsMouseInsideCircle(false);
+    // const group = existingNodeLayerRef.current.find(`#${node.nodeId}`);
+    // console.log("x", group[0].attrs.x);
+    // console.log("y", group[0].attrs.y);
+    // if (!isMouseInsideSmallCircle) {
+    //   // 在這裡處理真正的 onMouseLeave...
+    //   const stage = e.target.getStage();
+    //   stage.container().style.cursor = 'default';
+    //   setHoverNodeId(null);
+    //   setHoverNodeDetailInfo([]);
+    //   clearTimeout(hoverTimeoutRef.current);
+    // }
+  };
+
+  // const handleSmallCircleMouseEnter = () => {
+  //   console.log("enter small")
+  //   setIsMouseInsideSmallCircle(true);
+  // };
+
+  // const handleSmallCircleMouseLeave = () => {
+  //   console.log("leave small")
+  //   setIsMouseInsideSmallCircle(false);
+  //   // 如果滑鼠同時也不在大圓圈上，那麼處理 onMouseLeave
+  //   // if (!isMouseInsideCircle) {
+  //   //   // 在這裡處理真正的 onMouseLeave...
+  //   // }
+  // };
+
+  // const handleShowAttribute = (e, attribute) => {
+  //   e.cancelBubble = true;
+  //   console.log(attribute);
+  //   console.log("default");
+  // };
+
   const handleClick = (e, node) => {
     e.cancelBubble = true;
 
@@ -177,7 +272,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
     const clickedNodeId = node.nodeId;
     const clickedNode = nodeInfo.find((node) => node.nodeId === clickedNodeId);
 
-    if (node.nodeType !== 'folder') {
+    if (node.nodeType === 'normal') {
 
       // Open the nodefile on computer
       const openNodeFilePath = clickedNode.filepath;
@@ -192,6 +287,9 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
       // Open the folder
       onFolderOpen(node);
       return;
+    } else if (node.nodeType === 'notion') {
+      // Open the notion url
+      window.electronAPI.openUrl(node.filepath);
     }
   };
 
@@ -217,12 +315,6 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
       
       const nodeToDropId = nodeMoving.nodeId;
       const folderId = dropFolder.nodeId;
-      // const updatedChildInfo = [...dropFolder.childNode, nodeMoving];
-      // const updatedNode = { ...dropFolder, childNode: updatedChildInfo };
-
-      // const updatedNodes = nodesInThisFile
-      //   .map((n) => (n.nodeId === dropFolder.nodeId ? updatedNode : n))
-      //   .filter((n) => n.nodeId !== nodeToDropId);
 
       nodeIntoFolder(nodeToDropId, folderId);
 
@@ -251,32 +343,67 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
             onDrop={() => handleDrop(node, index)}
           >
             <Circle
-              key={node.key + "FileIcon"}
               name="node"
-              radius={circleRadius}
+              radius={(hoverNodeId === node.nodeId) ? circleRadius*1.9 : circleRadius}
               fillPatternImage={node.fileIcon}
-              fillPatternOffset={{ x: 16 , y: 16 }}
+              // 64px img setting
+              fillPatternOffset={{ x: 24 , y: 24 }}
               // fillPatternScale={ x: e.target.radius() * 2 / img.width, y: e.target.radius() * 2 / img.height }
+              // stroke={"black"}
+              // strokeWidth={1}
               fillPatternRepeat={'no-repeat'}
-              fillPatternScaleX={2}
-              fillPatternScaleY={2}
+              fillPatternScaleX={1}
+              fillPatternScaleY={1}
+              onMouseEnter={(e) => handleMouseEnter(e, node)}
+              onMouseLeave={(e) => handleMouseLeave(e, node)}
               onClick={(e) => handleClick(e, node)}
               onDblClick={() => handleDblClick(node, index)}
             />
             <Text
               text={node.fileName}
-              key={node.key + "fileName"}
-              fontSize={17}
+              fontSize={16}
               fill="black"
               align="center"
               width={circleRadius * 2} // 文字框寬度與 Circle 半徑相同
-              height={40} // 文字框高度
+              height={60} // 文字框高度
               offsetY={-circleRadius*0.7} // 微調位置，加上一些偏移量
               offsetX={circleRadius} // 水平居中
               wrap="char" // 換行
               ellipsis={true} // 省略號
               listening={false} // 不接收事件
             />
+            {(hoverNodeId === node.nodeId) && hoverNodeDetailInfo.length > 0 && !isDraggingNode &&
+              hoverNodeDetailInfo.map((info, index) => (
+              <Group
+                id={info.attribute.labelId}
+                key={info.attribute.labelId}
+                offsetX={info.x}
+                offsetY={info.y}
+              >
+                <Circle
+                  fill={info.attribute.color}
+                  radius={circleRadius*0.25}
+                  listening={false}
+                  // onDblClick={() => console.log("DDD")}
+                  // onMouseEnter={handleSmallCircleMouseEnter}
+                  // onMouseLeave={handleSmallCircleMouseLeave}
+                />
+                <Text
+                  text={info.attribute.labelName}
+                  fontSize={14}
+                  fill="black"
+                  align="center"
+                  width={circleRadius * 0.5 * 2} // 文字框寬度與 Circle 半徑相同
+                  offsetX={circleRadius * 0.5} // 水平居中
+                  offsetY={-circleRadius * 0.5}
+                  height={20} // 文字框高度
+                  wrap="char" // 換行
+                  ellipsis={true} // 省略號
+                  listening={false} // 不接收事件
+                />
+              </Group>
+              ))
+            }
           </Group>
         ))}
       </Layer>
