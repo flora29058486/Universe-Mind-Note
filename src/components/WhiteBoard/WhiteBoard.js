@@ -32,11 +32,12 @@ function generateBackgroundLayer() {
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRefChange, fileDropType, fileDrop, toggleButton, toolUsed, dropClientPosition }) => {
-
+export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRefChange, fileDropType, fileDrop, toggleButton, toolUsed, dropClientPosition, currentBg }) => {
   const prevFileDrop = useRef(fileDrop);
   const fileDropTypeRef = useRef(fileDropType);
+  const [background, setBackground] = useState('');
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [backGroundImage, setBackGroundImage] = useState('');
   // NodeContextMenu
   const [contextMenu, setContextMenu] = useState(null);
   // Dialog nodeIndo change from NodeDialog.js
@@ -185,6 +186,11 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
       fileDropTypeRef.current = fileDropType;
     }
   }, [fileDropType]);
+
+  useEffect(() => {
+    if (!currentBg) return;
+    setBackground(currentBg);
+  }, [currentBg]);
 
   useEffect(() => {
     if (prevFileDrop.current !== fileDrop) {
@@ -381,11 +387,12 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
         onContextMenu={handleContextMenu}
       >
         <BackLayerRender
+          backGround={backGroundImage}
           width={(stageSize.width + 2*padding)/stageScale} 
           height={(stageSize.height + 2*padding)/stageScale} 
           positionx={(position.x + padding)/stageScale}
           positiony={(position.y + padding)/stageScale}
-          step={step}
+          background={background}
         />
         <DrawExistingNode
           nodeInfo={nodes}

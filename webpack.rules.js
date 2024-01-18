@@ -33,7 +33,7 @@ module.exports = [
         // 直接配置 url-loader 就好，超過上限的資源會自動 fallback 給 file-loader
         loader: 'url-loader',
         options: {
-          name: 'img/[name].[ext]',
+          name: 'Image/[name].[ext]',
           limit: 10000,
         },
       },

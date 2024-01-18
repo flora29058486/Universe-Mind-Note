@@ -1,11 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { Rect, Layer } from "react-konva";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Rect, Layer, Image } from "react-konva";
+import useImage from 'use-image';
 
-export const BackLayerRender = ({ width, height, positionx, positiony, step }) => {
+import randomShapeBackground from '../../Image/randomShapeBackground.png';
+import whiteRectBackground from '../../Image/whiteRectBackground.png';
+import greenRect from '../../Image/greenRect.jpg';
+
+export const BackLayerRender = ({ width, height, positionx, positiony, background }) => {
+  const [localBg, setLocalBg] = useState('line');
+  const [step, setStep] = useState(60); // [px]
   const [grid, setGrid] = useState([]);
+  const backgrounds = {
+    randomShapeBackground: randomShapeBackground,
+    whiteRectBackground: whiteRectBackground,
+    greenRect: greenRect,
+  };
+  const [image, status] = useImage(backgrounds[background] || greenRect);
 
-  // Smooth math for point
-  function getLayerPoint(x, y, step) {
+  const updateStepAndBackground = useCallback((bg) => {
+    switch(bg) {
+      case 'randomShapeBackground':
+        setLocalBg('randomShapeBackground');
+        setStep(210);
+        break;
+      case 'whiteRectBackground':
+        setLocalBg('whiteRectBackground');
+        setStep(80);
+        break;
+      case 'greenRect':
+        setLocalBg('greenRect');
+        setStep(100);
+        break;
+      default:
+        setLocalBg('line');
+        setStep(60);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateStepAndBackground(background);
+  }, [background, updateStepAndBackground]);
+
+  const getLayerPoint = useCallback((x, y, step) => {
     let nextx = x;
     let nexty = y;
 
@@ -17,56 +53,64 @@ export const BackLayerRender = ({ width, height, positionx, positiony, step }) =
     }
 
     return {x: Math.round(nextx), y: Math.round(nexty) };
-  }
+  }, []);
 
-  const renderGrid = (width, height, x, y, step) => {
+  const createRect = useCallback((x, y, step) => {
+    if (localBg !== 'line') {
+      return (
+        <Image
+          key={`${x}-${y}`}
+          x={x}
+          y={y}
+          width={step}
+          height={step}
+          image={image}
+        />
+      );
+    } else {
+      return (
+        <Rect
+          key={`${x}-${y}`}
+          x={x}
+          y={y}
+          width={step}
+          height={step}
+          stroke="#e2e2ea"
+          strokeWidth={1}
+          lineCap="round"
+          lineJoin="round"
+        />
+      );
+    }
+  }, [localBg, image, step]);
 
+  const renderGrid = useCallback((width, height, x, y, step) => {
     const position = getLayerPoint(x, y, step);
-    width = width + (-position.x);
-    height = height - position.y;
+    const adjustedWidth = width + (-position.x);
+    const adjustedHeight = height - position.y;
 
     const newx = -position.x;
     const newy = -position.y;
 
     const rects = [];
-    // width, height + padding * scale
-    for (let y = newy; y < height; y += step) {
-      for (let x = newx; x < width; x += step) {
-        rects.push(createRect(x, y));
+    for (let y = newy; y < adjustedHeight; y += step) {
+      for (let x = newx; x < adjustedWidth; x += step) {
+        rects.push(createRect(x, y, step));
       }
     }
     return rects;
-  };
-
-  const createRect = (x, y) => {
-    return (
-      <Rect
-        key={`${x}-${y}`} // Adding a unique key for each rectangle
-        x={x}
-        y={y}
-        width={step}
-        height={step}
-        name='background'
-        stroke="#e2e2ea"
-        strokeWidth={1}
-        lineCap="round"
-        lineJoin="round"
-        isListening={false}
-        perfectDrawEnabled={false}
-        shadowForStrokeEnabled={false}
-        hitStrokeWidth={0}
-      />
-    );
-  };
+  }, [getLayerPoint, createRect, step]);
 
   useEffect(() => {
-    // setPosition(positionx, positiony);
-    // setGrid(renderGrid(width, height, position.x, position.y, step));
-    setGrid(renderGrid(width, height, positionx, positiony, step));
-    console.log(grid);
-  }, [positionx, positiony, width, height]);
+    if (status === 'loaded') {
+      setGrid(renderGrid(width, height, positionx, positiony, step));
+    }
+  }, [positionx, positiony, width, height, step, renderGrid, status]);
 
-  return (<Layer>
-    {grid}
-  </Layer>);
+  return (
+    <Layer>
+      {grid}
+    </Layer>
+  );
 };
+

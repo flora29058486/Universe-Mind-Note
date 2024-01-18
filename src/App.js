@@ -22,6 +22,8 @@ export default function App() {
   const [fileDrag, setFileDrag] = useState([]);
   const [dropClientPosition, setDropClientPosition] = useState({ x: 0, y: 0 });
   const [konvaStageJson, setKonvaStageJson] = useState(null);
+  // 畫布背景
+  const [currentBg, setCurrentBg] = useState('line');
 
   // request StageRef when app end
   const [stageSave, setStageSave] = useState(0);
@@ -85,7 +87,12 @@ export default function App() {
 
   useEffect(() => {
 
-  }, [fileDrag, fileDropType]);
+  }, [fileDrag, fileDropType, currentBg]);
+
+  // 背景按鈕選擇
+  const handleBackgroundChange = useCallback((bg) => {
+    setCurrentBg(bg);
+  }, []);
 
   // 工具列選擇 ToggleButtonOnMainKonva 參數設定
   const handleToolSelect = useCallback((button) => {
@@ -147,7 +154,7 @@ export default function App() {
                 }} 
                 xs={toolSelect ? 3 : 1}
               >
-                <Toolbar onToolSelect={handleToolSelect}/>
+                <Toolbar onToolSelect={handleToolSelect} currentBg={handleBackgroundChange} />
               </Grid>
             )
             : (
@@ -159,7 +166,7 @@ export default function App() {
                   width: '72px'
                 }}
               >
-              <Toolbar onToolSelect={handleToolSelect}/>
+              <Toolbar onToolSelect={handleToolSelect} currentBg={handleBackgroundChange}/>
             </Grid>
             )
           }
@@ -186,6 +193,7 @@ export default function App() {
                     toggleButton={toggleButton}
                     toolUsed={handleToolUsed}
                     dropClientPosition={dropClientPosition}
+                    currentBg={currentBg}
                   />
                 </div>
               </Grid>
@@ -210,6 +218,7 @@ export default function App() {
                     toggleButton={toggleButton}
                     toolUsed={handleToolUsed}
                     dropClientPosition={dropClientPosition}
+                    currentBg={currentBg}
                   />
                 </div>
               </Grid>

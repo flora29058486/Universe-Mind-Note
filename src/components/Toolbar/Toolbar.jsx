@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -15,10 +15,12 @@ import Grid from '@mui/material/Grid';
 import FileTreeView from './FileImport/FileTreeView.jsx';
 import LabelManager from './LabelManager/LabelManager.js';
 import NotionPageList from '../Extensions/notion/NotionPageList.js';
+import BackgroundChange from './Manage/BackgroundChange.js';
 import { useLabels } from '../Context/LabelContext.js';
 
-function Toolbar({onToolSelect}) {
+function Toolbar({ onToolSelect, currentBg }) {
   const [selectedButton, setSelectedButton] = useState('');
+  // const [currentBg, setCurrentBg] = useState('');
   const { labels, addLabel, removeLabel, mergeLabels, updateLabel, searchLabelsByName } = useLabels()
 
   const handleButtonClick = (buttonId) => {
@@ -30,6 +32,10 @@ function Toolbar({onToolSelect}) {
       setSelectedButton(buttonId);
     }
   };
+
+  const handleBackgroundChange = useCallback((bg) => {
+    currentBg(bg);
+  }, []);
 
   useEffect(() => {
     
@@ -102,19 +108,19 @@ function Toolbar({onToolSelect}) {
               </Tooltip>
             </ListItemButton>
             <ListItemButton
-              onClick={() => handleButtonClick('Settings')}
-              selected={selectedButton === 'Settings'}
+              onClick={() => handleButtonClick('Manage')}
+              selected={selectedButton === 'Manage'}
               sx={{
                 minHeight: 72,
                 maxWidth: 72,
                 justifyContent: open ? 'initial' : 'center',
                 px: 1,
-                borderLeft: selectedButton === 'Settings' ? '2px solid black' : '2px solid transparent',
+                borderLeft: selectedButton === 'Manage' ? '2px solid black' : '2px solid transparent',
               }}
             >
-              <Tooltip title="Settings" placement="right" arrow>
+              <Tooltip title="Manage" placement="right" arrow>
                 <ListItemIcon sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <SettingsIcon fontSize='large' sx={{ color: selectedButton === 'Settings' ? 'black' : '' }} />
+                  <SettingsIcon fontSize='large' sx={{ color: selectedButton === 'Manage' ? 'black' : '' }} />
                 </ListItemIcon>
               </Tooltip>
             </ListItemButton>
@@ -135,6 +141,9 @@ function Toolbar({onToolSelect}) {
         )}
         {selectedButton === 'Extensions' && (
           <NotionPageList />
+        )}
+        {selectedButton === 'Manage' && (
+          <BackgroundChange onBackgroundChange={handleBackgroundChange}/>
         )}
       </Grid>
     </Grid>

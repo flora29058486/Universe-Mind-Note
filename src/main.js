@@ -314,7 +314,7 @@ const createWindow = () => {
     fullscreenable: true,
     // icon: `${__dirname}/dist/assets/imgs/logo.png`, // 使用绝对路径
     // backgroundColor: 'blue',
-    backgroundMaterial: 'acrylic',
+    // backgroundMaterial: 'acrylic',
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       contextIsolation: true,
@@ -333,7 +333,7 @@ const createWindow = () => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 
   // 窗口要关闭的时候触发
   mainWindow.on('close', (e) => {
