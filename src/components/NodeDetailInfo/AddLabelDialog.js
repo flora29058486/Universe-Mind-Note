@@ -106,7 +106,7 @@ const AddLabelDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) =>
   };
 
   return (
-    <Dialog open={dialogOpen} onClose={handleCloseDialog} aria-labelledby="node-dialog-title" maxWidth='xs' fullWidth>
+    <Dialog open={dialogOpen} onWheel={e => e.stopPropagation()} onClose={handleCloseDialog} aria-labelledby="node-dialog-title" maxWidth='xs' fullWidth>
       <Box>
         <AddNewLabel currentNode={currentNodePassToAddLabel} onclose={handleAddLabelClose} addLabel={handleAddLabel} />
       </Box>

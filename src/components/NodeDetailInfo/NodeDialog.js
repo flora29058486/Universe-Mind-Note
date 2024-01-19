@@ -223,7 +223,8 @@ const NodeDialog = ({ currentNode, open, handleClose, onUpdateNodeInfo }) => {
   return (
     <Dialog 
       open={dialogOpen} 
-      onClose={handleCloseDialog} 
+      onClose={handleCloseDialog}
+      onWheel={e => e.stopPropagation()}
       aria-labelledby="node-dialog-title" 
       maxWidth='xs' fullWidth 
       PaperProps={{ style: { overflowY: 'auto', maxHeight: '60vh', padding: '10px', minHeight: '480px', display: 'flex', flexDirection: 'column' } }}

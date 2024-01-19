@@ -77,7 +77,7 @@ function FolderDialog({ folderDialogOpen, onFolderDialogClose, folderNode }) {
   };
 
   return (
-    <Dialog open={folderDialogOpen} onClose={onFolderDialogClose} fullWidth maxWidth="md" PaperProps={{ style: { overflowY: 'auto', maxHeight: '60vh', padding: '10px', minHeight: '680px' } }} >
+    <Dialog open={folderDialogOpen} onWheel={e => e.stopPropagation()} onClose={onFolderDialogClose} fullWidth maxWidth="md" PaperProps={{ style: { overflowY: 'auto', maxHeight: '60vh', padding: '10px', minHeight: '680px' } }} >
       <ToggleButtonGroup
         value={viewMode}
         exclusive

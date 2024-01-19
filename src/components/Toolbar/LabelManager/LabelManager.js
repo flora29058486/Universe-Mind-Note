@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, List, ListItem, Checkbox, ListItemText, ListItemIcon, Button, Paper, Divider, ListItemButton, Typography, TextField, IconButton } from '@mui/material';
+import { Box, List, ListItem, Checkbox, ListItemText, ListItemIcon, Button, Paper, Divider, ListItemButton, Typography, TextField, IconButton, Tab, Tabs, TabContext } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
@@ -14,8 +14,29 @@ import { useNodes } from '../../Context/NodeContext.js';
 const useStyles = makeStyles({
   paper: {
     height: '100%', /* 設置最大高度 */
+    width: '100%', /* 設置最大寬度 */
   },
   labelList: {
+    height: 'calc(100vh - 205px)', /* 設置最大高度 */
+    overflowY: 'auto', /* 啟用垂直滾動條 */
+    overflowX: 'hidden', /* 啟用水平滾動條 */
+    "&::-webkit-scrollbar": {
+      width: '10px', /* 滾動條寬度 */
+    },
+    scrollbarWidth: 'thin', /* 滾動條寬度（Firefox支援） */
+    "&::-webkit-scrollbar-thumb": {
+      backgroundColor: '#888', /* 滾動條顏色 */
+      borderRadius: '6px', /* 圓角 */
+      transition: 'background-color 1.2s ease', /* 顏色漸變動畫 */
+    },
+    "&:hover::-webkit-scrollbar-thumb": {
+      backgroundColor: '#555', /* 滑鼠懸停時滾動條顏色改變 */
+    },
+    "&::-webkit-scrollbar-track": {
+      backgroundColor: 'transparent', /* 滾動條背景顏色 */
+    },
+  },
+  labelList2: {
     height: 'calc(100vh - 145px)', /* 設置最大高度 */
     overflowY: 'auto', /* 啟用垂直滾動條 */
     overflowX: 'hidden', /* 啟用水平滾動條 */
@@ -60,8 +81,9 @@ const useStyles = makeStyles({
   },
 });
 
-function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
+function LabelManager({ labels, onMergeLabels, onUpdateLabel, findedNodes }) {
   const classes = useStyles();
+  const [tabValue, setTabValue] = useState(0);
   const { addLabel, removeLabel } = useLabels();
   const { nodes, setNodes } = useNodes();
 
@@ -76,6 +98,8 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
   const [newLabelColor, setNewLabelColor] = useState(false);
   const [selectedColor, setSelectedColor] = useState('');
   const [popoverStyle, setPopoverStyle] = useState({marginTop: '40px'});
+  // find node by attribute
+  const [nodeFilter, setNodeFilter] = useState([{}]);
 
   const updatePopoverStyle = (event) => {
     setNewLabelColor(!newLabelColor);
@@ -91,8 +115,15 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
   };
 
   useEffect(() => {
-    console.log(selectedLabels);
+    if (selectedLabels.length === 0) {
+      setNodeFilter([{}]);
+    }
   }, [selectedLabels]);
+
+  // 搜尋節點
+  useEffect(() => {
+    findedNodes(nodeFilter);
+  }, [nodeFilter]);
 
   useEffect(() => {
     if (searchTerm === '') {
@@ -183,144 +214,232 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel }) {
       addLabel({ labelName: searchTerm, color: selectedColor});
     }
   };
+  
+  const handleTabValueChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const handleFindNodeByAttribute = () => {
+    const selectedNodes = nodes.filter(node => node.attribute.some(label => selectedLabels.includes(label.labelId)));
+    setNodeFilter(selectedNodes);
+    // setNodes(selectedNodes);
+    // setSelectedLabels([]);
+    // setShowCheckboxes(false);
+    // setEditingLabelId(null);
+  }
 
   return (
     <Paper className={classes.paper} onWheel={e => e.stopPropagation()}>
-      <Box padding={2}>
-        <TextField
-          id="filled-search"
-          fullWidth
-          label="搜尋標籤"
-          type="search"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <SearchIcon sx={{ color: 'action.active' }} />
-            ),
-            sx: {
-              // // fontSize
-              // '.MuiInputBase-input': {
-              //   fontSize: '1.2rem', 
-              // },
-              borderRadius: '30px',
-              boxShadow: '0 2px 3px rgba(0, 0, 0, 0.15)',
-            },
-          }}
-        />
+      <Box sx={{ width: '100%',  }}>
+        <Tabs value={tabValue} onChange={handleTabValueChange} centered>
+          <Tab label="標籤管理" />
+          <Tab label="搜尋檔案" />
+        </Tabs>
       </Box>
-      <div className={classes.labelList}>
-        <List>
-          {filteredLabels.map((label, index) => (
-            <React.Fragment key={label.labelId}>
-              {index > 0 && <Divider component="li" />}
-              <ListItem secondaryAction={
-                showCheckboxes ? (
-                  <Checkbox
-                    edge="end"
-                    onChange={() => handleToggle(label.labelId)}
-                    checked={selectedLabels.indexOf(label.labelId) !== -1}
-                  />
-                ) : null
-              }>
-              {editingLabelId === label.labelId ? (
-                // 如果當前標籤處於編輯模式
-                <React.Fragment>
-                  <IconButton onClick = {() => setDisplayColorPicker(!displayColorPicker)}>
-                    <div style={{
-                      width: '30px',
-                      height: '30px',
-                      backgroundColor: label.color,
-                      borderRadius: '50%',
-                    }} />
-                  </IconButton>
-                  {displayColorPicker ? (
-                    <div className={classes.popover}>
-                      <div className={classes.cover} onClick={colorChangeFinish(label.labelId)} />
-                      <CompactPicker color={selectedColor} onChange={handleColorChange} 
-                      />
-                    </div>
-                  ) : null}
-                  <TextField
-                    onBlur={(e) => handleUpdateLabelName(label.labelId, e.target.value)}
-                    fullWidth
-                    defaultValue={label.labelName}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.target.blur();
-                      }
-                    }}
-                    InputProps={{
-                      endAdornment: (
-                        <EditIcon sx={{ color: 'action.active' }} />
-                      ),
-                    }}
-                  />
-                </React.Fragment>
-              ) : (
-                // 正常模式
-                <ListItemButton onClick={() => handleToggle(label.labelId)}>
-                  <ListItemIcon>
-                    <div style={{
-                      width: '16px',
-                      height: '16px',
-                      backgroundColor: label.color,
-                      borderRadius: '50%'
-                    }} />
-                  </ListItemIcon>
-                  <ListItemText primary={
-                    <Typography variant="body1" style={{
-                      maxWidth: '100%', // 根据您的布局调整这个宽度
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}>
-                      {label.labelName}
-                    </Typography>
-                  } />
-                </ListItemButton>
-              )}
-              </ListItem>
-            </React.Fragment>
-          ))}
-        </List>
-        {searchTerm !== '' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', ml: 3, pb: 3 }}>
-            <Typography variant="body1" sx={{ mb:1 }}>
-              新增標籤：
-            </Typography>
-            <Button onClick = {(e) => updatePopoverStyle(e)} sx={{ alignSelf: 'flex-start', maxWidth: '95%' }}>
-              <LocalOfferIcon></LocalOfferIcon>
-              <span style={{ marginRight: '1rem' }}></span>
-              <Typography variant="body1" style={{
-                // maxWidth: 'calc(80%)', // 根据您的布局调整这个宽度
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {searchTerm}
-              </Typography>
-            </Button>
-            {newLabelColor ? (
-              <div className={classes.popoverOfNewLabel} style={{ ...popoverStyle }}>
-                <div className={classes.cover} onClick={addNewLabelFromLabelManager} />
-                <CompactPicker color={selectedColor} onChange={handleColorChange} 
-                />
-              </div>
-            ) : null}
+      {tabValue === 0 && (
+        <>
+          <Box padding={2}>
+            <TextField
+              id="filled-search"
+              fullWidth
+              label="搜尋標籤"
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <SearchIcon sx={{ color: 'action.active' }} />
+                ),
+                sx: {
+                  // // fontSize
+                  // '.MuiInputBase-input': {
+                  //   fontSize: '1.2rem', 
+                  // },
+                  borderRadius: '30px',
+                  boxShadow: '0 2px 3px rgba(0, 0, 0, 0.15)',
+                },
+              }}
+            />
           </Box>
-        )}
-      </div>
-      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-        <Button onClick={handleMerge} disabled>Merge Label</Button>
-        <Button 
-          onClick={handleDelete} 
-          disabled={selectedLabels.length === 0} 
-          variant="outlined"
-          sx={{ ml: 2 }}
-          startIcon={<DeleteIcon />}
-        >Delete Label</Button>
-      </Box>
+          <div className={classes.labelList}>
+            <List>
+              {filteredLabels.map((label, index) => (
+                <React.Fragment key={label.labelId}>
+                  {index > 0 && <Divider component="li" />}
+                  <ListItem secondaryAction={
+                    showCheckboxes ? (
+                      <Checkbox
+                        edge="end"
+                        onChange={() => handleToggle(label.labelId)}
+                        checked={selectedLabels.indexOf(label.labelId) !== -1}
+                      />
+                    ) : null
+                  }>
+                  {editingLabelId === label.labelId ? (
+                    // 如果當前標籤處於編輯模式
+                    <React.Fragment>
+                      <IconButton onClick = {() => setDisplayColorPicker(!displayColorPicker)}>
+                        <div style={{
+                          width: '30px',
+                          height: '30px',
+                          backgroundColor: label.color,
+                          borderRadius: '50%',
+                        }} />
+                      </IconButton>
+                      {displayColorPicker ? (
+                        <div className={classes.popover}>
+                          <div className={classes.cover} onClick={colorChangeFinish(label.labelId)} />
+                          <CompactPicker color={selectedColor} onChange={handleColorChange} 
+                          />
+                        </div>
+                      ) : null}
+                      <TextField
+                        onBlur={(e) => handleUpdateLabelName(label.labelId, e.target.value)}
+                        fullWidth
+                        defaultValue={label.labelName}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.target.blur();
+                          }
+                        }}
+                        InputProps={{
+                          endAdornment: (
+                            <EditIcon sx={{ color: 'action.active' }} />
+                          ),
+                        }}
+                      />
+                    </React.Fragment>
+                  ) : (
+                    // 正常模式
+                    <ListItemButton onClick={() => handleToggle(label.labelId)}>
+                      <ListItemIcon>
+                        <div style={{
+                          width: '16px',
+                          height: '16px',
+                          backgroundColor: label.color,
+                          borderRadius: '50%'
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText primary={
+                        <Typography variant="body1" style={{
+                          maxWidth: '100%', // 根据您的布局调整这个宽度
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {label.labelName}
+                        </Typography>
+                      } />
+                    </ListItemButton>
+                  )}
+                  </ListItem>
+                </React.Fragment>
+              ))}
+            </List>
+            {searchTerm !== '' && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', ml: 3, pb: 3 }}>
+                <Typography variant="body1" sx={{ mb:1 }}>
+                  新增標籤：
+                </Typography>
+                <Button onClick = {(e) => updatePopoverStyle(e)} sx={{ alignSelf: 'flex-start', maxWidth: '95%' }}>
+                  <LocalOfferIcon></LocalOfferIcon>
+                  <span style={{ marginRight: '1rem' }}></span>
+                  <Typography variant="body1" style={{
+                    // maxWidth: 'calc(80%)', // 根据您的布局调整这个宽度
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {searchTerm}
+                  </Typography>
+                </Button>
+                {newLabelColor ? (
+                  <div className={classes.popoverOfNewLabel} style={{ ...popoverStyle }}>
+                    <div className={classes.cover} onClick={addNewLabelFromLabelManager} />
+                    <CompactPicker color={selectedColor} onChange={handleColorChange} 
+                    />
+                  </div>
+                ) : null}
+              </Box>
+            )}
+          </div>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2, mt: 1 }}>
+            <Button onClick={handleMerge} disabled>Merge Label</Button>
+            <Button 
+              onClick={handleDelete} 
+              disabled={selectedLabels.length === 0} 
+              variant="outlined"
+              sx={{ ml: 2 }}
+              startIcon={<DeleteIcon />}
+            >Delete Label</Button>
+          </Box>
+        </>
+      )}
+      {tabValue === 1 && (
+        <>
+          <Box padding={2}>
+            <TextField
+              id="filled-search"
+              fullWidth
+              label="用標籤找檔案"
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <SearchIcon sx={{ color: 'action.active' }} />
+                ),
+                sx: {
+                  borderRadius: '30px',
+                  boxShadow: '0 2px 3px rgba(0, 0, 0, 0.15)',
+                },
+              }}
+            />
+          </Box>
+          <div className={classes.labelList2}>
+            <List>
+              {filteredLabels.map((label, index) => (
+              <React.Fragment key={label.labelId}>
+                {index > 0 && <Divider component="li" />}
+                <ListItem secondaryAction={
+                  showCheckboxes ? (
+                    <Checkbox
+                      edge="end"
+                      onChange={() => handleToggle(label.labelId)}
+                      checked={selectedLabels.indexOf(label.labelId) !== -1}
+                    />
+                  ) : null
+                }>
+                  <ListItemButton onClick={() => handleToggle(label.labelId)}>
+                    <ListItemIcon>
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        backgroundColor: label.color,
+                        borderRadius: '50%'
+                      }} />
+                    </ListItemIcon>
+                    <ListItemText primary={
+                      <Typography variant="body1" style={{
+                        maxWidth: '100%', // 根据您的布局调整这个宽度
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {label.labelName}
+                      </Typography>
+                    }/>
+                  </ListItemButton>
+                </ListItem>
+              </React.Fragment>
+              ))}
+            </List>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Button sx={{ mt: '8px' }} variant="contained" onClick={handleFindNodeByAttribute} startIcon={<SearchIcon />}>尋找</Button>
+            </Box>
+          </div>
+        </>
+      )}
     </Paper>
   );
 }

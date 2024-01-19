@@ -30,6 +30,8 @@ export default function App() {
   // textLayerData
   const [textLayerOnLoad, setTextLayerOnLoad] = useState(null);
   const [textLayerData, setTextLayerData] = useState(null);
+  // nodeFinder
+  const [nodeFind, setNodeFind] = useState(null);
 
   // const [userData, setUserData] = useState(null);
 
@@ -94,6 +96,11 @@ export default function App() {
     setCurrentBg(bg);
   }, []);
 
+  // 搜尋節點
+  function handleSearchResults(findedNodes) {
+    setNodeFind(findedNodes);
+  }
+
   // 工具列選擇 ToggleButtonOnMainKonva 參數設定
   const handleToolSelect = useCallback((button) => {
 
@@ -154,7 +161,7 @@ export default function App() {
                 }} 
                 xs={toolSelect ? 3 : 1}
               >
-                <Toolbar onToolSelect={handleToolSelect} currentBg={handleBackgroundChange} />
+                <Toolbar onToolSelect={handleToolSelect} currentBg={handleBackgroundChange} onSearchResults={handleSearchResults}/>
               </Grid>
             )
             : (
@@ -166,7 +173,7 @@ export default function App() {
                   width: '72px'
                 }}
               >
-              <Toolbar onToolSelect={handleToolSelect} currentBg={handleBackgroundChange}/>
+              <Toolbar onToolSelect={handleToolSelect} currentBg={handleBackgroundChange} onSearchResults={handleSearchResults}/>
             </Grid>
             )
           }
@@ -194,6 +201,7 @@ export default function App() {
                     toolUsed={handleToolUsed}
                     dropClientPosition={dropClientPosition}
                     currentBg={currentBg}
+                    nodeFind={nodeFind}
                   />
                 </div>
               </Grid>
@@ -219,6 +227,7 @@ export default function App() {
                     toolUsed={handleToolUsed}
                     dropClientPosition={dropClientPosition}
                     currentBg={currentBg}
+                    nodeFind={nodeFind}
                   />
                 </div>
               </Grid>

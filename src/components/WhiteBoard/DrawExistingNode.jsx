@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Circle, Layer, Text, Group, Rect } from 'react-konva';
 import { useNodes } from '../Context/NodeContext.js';
+import { set } from 'lodash-es';
 
-const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
+const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen, findNodeResult }) => {
   const { nodes, setNodes, updateNodePosition, nodeIntoFolder } = useNodes();
   // nodeOnhover interaction
   const [hoverNodeId, setHoverNodeId] = useState(null);
+  const [hoverRectId, setHoverRectId] = useState(null);
   const hoverTimeoutRef = useRef(null);
   const [hoverNodeDetailInfo, setHoverNodeDetailInfo] = useState([]);
   const [isDraggingNode, setIsDraggingNode] = useState(false);
   // const [isMouseInsideCircle, setIsMouseInsideCircle] = useState(false);
   // const [isMouseInsideSmallCircle, setIsMouseInsideSmallCircle] = useState(false);
+  // 搜尋節點
+  const [findedNodes, setFindedNodes] = useState(null);
 
   const [nodesInThisFile, setNodesInThisFile] = useState([]);
   const [previousShape, setPreviousShape] = useState(null);
@@ -60,17 +64,27 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
 
   }, [nodeInfo]);
 
-  // nodeOnhover
-  const generateAdditionalCircles = (count, radius) => {
+  const generateAdditionalCircles = (count, paddingWidth) => {
+    // 中心點的偏移量應該根據圓的總數來計算
+    const isEven = count % 2 === 0;
+    const offset = isEven ? (paddingWidth / 2) * (count - 1) : paddingWidth * Math.floor(count / 2);
+  
     return Array.from({ length: count }, (_, i) => {
-      const angle = 90 + (360 / count) * i;
-      const radian = (Math.PI / 180) * angle;
       return {
-        x: radius * Math.cos(radian),
-        y: radius * Math.sin(radian),
+        // 對於偶數個圓，第一個圓從 -offset 開始並逐漸增加 paddingWidth
+        // 對於奇數個圓，中間的圓位於中心點，其他圓相應分佈於兩側
+        x: -offset + paddingWidth * i,
+        y: 0,
       };
     });
   };
+
+  // 搜尋節點
+  useEffect(() => {
+    if (!findNodeResult) return;
+    console.log(findNodeResult);
+    setFindedNodes(findNodeResult);
+  }, [findNodeResult]);
 
   useEffect(() => {
     if (!hoverNodeId) return;
@@ -78,16 +92,15 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
     const node = nodes.find(n => n.nodeId === hoverNodeId);
     if (!node || !node.attribute || node.attribute.length === 0) return;
 
-    // 如果 attribute 長度大於 6，則只取前六個
-    const attribute = node.attribute.slice(0, 6);
-    const position = generateAdditionalCircles(attribute.length, circleRadius*1.5);
+    // 如果 attribute 長度大於 4，則只取前四個
+    const attribute = node.attribute.slice(0, 4);
+    const position = generateAdditionalCircles(attribute.length, 80);
     // 使用 map 函數來轉換 position 數組並設置詳細信息
     const returnInfo = position.map((pos, i) => ({
       x: pos.x,
       y: pos.y,
       attribute: attribute[i],
     }));
-    // console.log(returnInfo);
     setHoverNodeDetailInfo(returnInfo);
   }, [hoverNodeId, nodes, circleRadius, setHoverNodeDetailInfo]);
 
@@ -140,8 +153,6 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
     setIsDraggingNode(false);
     const pos = e.target.getStage().getPointerPosition();
     const existingNodeLayer = e.target.getStage().findOne('.existingNodeLayer');
-    // console.log(e.target.attrs.id)
-    // console.log(e.target.position())
     updateNodePosition(e.target.attrs.id, e.target.position().x, e.target.position().y);
   
     const shape = existingNodeLayer.getIntersection(pos);
@@ -206,6 +217,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
   };
 
   const handleMouseEnter = (e, node) => {
+    setHoverRectId(node.nodeId);
     // console.log("Enter big")
     // setIsMouseInsideCircle(true);
     const stage = e.target.getStage()
@@ -216,47 +228,14 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
   };
 
   const handleMouseLeave = (e, node) => {
+    setHoverRectId(null);
     const stage = e.target.getStage();
     stage.container().style.cursor = 'default';
     setHoverNodeId(null);
     setHoverNodeDetailInfo([]);
     clearTimeout(hoverTimeoutRef.current);
 
-    
-    // console.log("Leave big")
-    // setIsMouseInsideCircle(false);
-    // const group = existingNodeLayerRef.current.find(`#${node.nodeId}`);
-    // console.log("x", group[0].attrs.x);
-    // console.log("y", group[0].attrs.y);
-    // if (!isMouseInsideSmallCircle) {
-    //   // 在這裡處理真正的 onMouseLeave...
-    //   const stage = e.target.getStage();
-    //   stage.container().style.cursor = 'default';
-    //   setHoverNodeId(null);
-    //   setHoverNodeDetailInfo([]);
-    //   clearTimeout(hoverTimeoutRef.current);
-    // }
   };
-
-  // const handleSmallCircleMouseEnter = () => {
-  //   console.log("enter small")
-  //   setIsMouseInsideSmallCircle(true);
-  // };
-
-  // const handleSmallCircleMouseLeave = () => {
-  //   console.log("leave small")
-  //   setIsMouseInsideSmallCircle(false);
-  //   // 如果滑鼠同時也不在大圓圈上，那麼處理 onMouseLeave
-  //   // if (!isMouseInsideCircle) {
-  //   //   // 在這裡處理真正的 onMouseLeave...
-  //   // }
-  // };
-
-  // const handleShowAttribute = (e, attribute) => {
-  //   e.cancelBubble = true;
-  //   console.log(attribute);
-  //   console.log("default");
-  // };
 
   const handleClick = (e, node) => {
     e.cancelBubble = true;
@@ -312,7 +291,6 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
         existingNodeLayerRef.current.batchDraw();
       }
 
-      
       const nodeToDropId = nodeMoving.nodeId;
       const folderId = dropFolder.nodeId;
 
@@ -342,9 +320,29 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
             onDragOver={() => handleDragOver(node, index)}
             onDrop={() => handleDrop(node, index)}
           >
+            {(hoverRectId === node.nodeId) && (
+              <Rect
+                width={circleRadius*2} // 正方形的寬度
+                height={circleRadius*2} // 正方形的高度
+                offset={{ x: circleRadius, y: circleRadius }} // 正方形的中心點
+                shadowBlur={2}
+                fill={'rgba(230,233,236,0.03)'}
+                cornerRadius={6}
+                isListening={false}
+              />
+            )}
+            {findedNodes && findedNodes.some(findedNode => findedNode.nodeId === node.nodeId) && (
+              <Circle
+                radius={circleRadius + 10}
+                stroke="#DAA520"
+                strokeWidth={3}
+                fill="transparent"
+              />
+            )}
             <Circle
               name="node"
-              radius={(hoverNodeId === node.nodeId) ? circleRadius*1.9 : circleRadius}
+              // radius={(hoverNodeId === node.nodeId) ? circleRadius*1.9 : circleRadius}
+              radius={circleRadius}
               fillPatternImage={node.fileIcon}
               // 64px img setting
               fillPatternOffset={{ x: 24 , y: 24 }}
@@ -378,7 +376,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen }) => {
                 id={info.attribute.labelId}
                 key={info.attribute.labelId}
                 offsetX={info.x}
-                offsetY={info.y}
+                offsetY={circleRadius*2}
               >
                 <Circle
                   fill={info.attribute.color}

@@ -18,10 +18,14 @@ import NotionPageList from '../Extensions/notion/NotionPageList.js';
 import BackgroundChange from './Manage/BackgroundChange.js';
 import { useLabels } from '../Context/LabelContext.js';
 
-function Toolbar({ onToolSelect, currentBg }) {
+function Toolbar({ onToolSelect, currentBg, onSearchResults }) {
   const [selectedButton, setSelectedButton] = useState('');
   // const [currentBg, setCurrentBg] = useState('');
   const { labels, addLabel, removeLabel, mergeLabels, updateLabel, searchLabelsByName } = useLabels()
+
+  useEffect(() => {
+    
+  }, [selectedButton]);
 
   const handleButtonClick = (buttonId) => {
     if (buttonId === selectedButton) {
@@ -33,13 +37,14 @@ function Toolbar({ onToolSelect, currentBg }) {
     }
   };
 
+  // 搜尋節點
+  const onNodeSearch = useCallback((findedNodes) => {
+    onSearchResults(findedNodes);
+  }, []);
+
   const handleBackgroundChange = useCallback((bg) => {
     currentBg(bg);
   }, []);
-
-  useEffect(() => {
-    
-  }, [selectedButton]);
 
   return (
     <Grid
@@ -127,7 +132,7 @@ function Toolbar({ onToolSelect, currentBg }) {
           </List>
         </Drawer>
       </Grid>
-      <Grid item sx={{ height: '100vh', maxWidth: 'calc(100% - 72px)', flexShrink: 1, flexGrow: 1 }}>
+      <Grid item sx={{ height: '100vh', flexShrink: 1, flexGrow: 1 }}>
         {selectedButton === 'Explorer' && (
           <FileTreeView selectedButton={selectedButton} />
         )}
@@ -137,6 +142,7 @@ function Toolbar({ onToolSelect, currentBg }) {
             onAddLabel={addLabel}
             onMergeLabels={mergeLabels}
             onUpdateLabel={updateLabel}
+            findedNodes={onNodeSearch}
           />
         )}
         {selectedButton === 'Extensions' && (

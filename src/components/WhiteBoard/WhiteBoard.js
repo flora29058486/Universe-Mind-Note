@@ -32,7 +32,7 @@ function generateBackgroundLayer() {
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRefChange, fileDropType, fileDrop, toggleButton, toolUsed, dropClientPosition, currentBg }) => {
+export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRefChange, fileDropType, fileDrop, toggleButton, toolUsed, dropClientPosition, currentBg, nodeFind }) => {
   const prevFileDrop = useRef(fileDrop);
   const fileDropTypeRef = useRef(fileDropType);
   const [background, setBackground] = useState('');
@@ -57,6 +57,8 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
   // 文字方塊
   const [texts, setTexts] = useState([]);
   const [editingTextId, setEditingTextId] = useState(null);
+  // 尋找節點
+  const [findNodeResult, setFindNodeResult] = useState(null);
 
   // context
   const { labels, setLabels } = useLabels();
@@ -191,6 +193,12 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
     if (!currentBg) return;
     setBackground(currentBg);
   }, [currentBg]);
+
+  // 搜尋節點
+  useEffect(() => {
+    if (!nodeFind) return;
+    setFindNodeResult(nodeFind);
+  }, [nodeFind]);
 
   useEffect(() => {
     if (prevFileDrop.current !== fileDrop) {
@@ -398,6 +406,7 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
           nodeInfo={nodes}
           circleRadius={48}
           onFolderOpen={handleFolderDialogOpen}
+          findNodeResult={findNodeResult}
         />
         <ImageTextLayer
           texts={texts}
@@ -409,6 +418,7 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
       <Menu
         open={contextMenu !== null}
         onClose={handleContextMenuClose}
+        onWheel={handleContextMenuClose}
         anchorReference="anchorPosition"
         anchorPosition={
           contextMenu !== null
