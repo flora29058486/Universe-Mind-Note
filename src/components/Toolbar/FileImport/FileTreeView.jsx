@@ -36,6 +36,7 @@ const useStyles = makeStyles({
     },
   },
   labelRoot: {
+    width: '100%',
     overflow: 'hidden',
   },
   labelText: {

@@ -189,10 +189,10 @@ let mainWindow;
 // 防止開啟第二個app視窗
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('electron-fiddle', process.execPath, [path.resolve(process.argv[1])])
+    app.setAsDefaultProtocolClient('electron-umn', process.execPath, [path.resolve(process.argv[1])])
   }
 } else {
-    app.setAsDefaultProtocolClient('electron-fiddle')
+    app.setAsDefaultProtocolClient('electron-umn')
 }
 
 const gotTheLock = app.requestSingleInstanceLock()
@@ -226,7 +226,6 @@ if (!gotTheLock) {
           const organizeAndSortNotionPages = async () => {
             try {
               const pages = await getAllPages();
-              // console.log(pages);
               const organizedPages = pages.map(page => {
 
                 function findPropertyWithId(properties, searchId) {
@@ -333,7 +332,7 @@ const createWindow = () => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 
   // 窗口要关闭的时候触发
   mainWindow.on('close', (e) => {

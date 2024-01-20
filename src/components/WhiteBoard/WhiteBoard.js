@@ -65,6 +65,8 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
   const [editingTextId, setEditingTextId] = useState(null);
   // 尋找節點
   const [findNodeResult, setFindNodeResult] = useState(null);
+  // 刪除節點
+  const [isDeletingNode, setIsDeletingNode] = useState(false);
 
   // context
   const { labels, setLabels } = useLabels();
@@ -358,6 +360,10 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
     };
     e.cancelBubble = true;
     const pos = e.currentTarget.getRelativePointerPosition();
+    if (toggleButton !== "delete") {
+      console.log('not delete')
+      setIsDeletingNode(false);
+    }
 
     if (toggleButton === "create-folder" && e.evt.button === 0) {
       const NodesGenerate = generateFolderNode(pos);
@@ -388,22 +394,21 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
       setArrowMoving(newArrow.id);
       toolUsed('');
       addArrow(newArrow);
-    } else if (toggleButton === "delete" && e.evt.button === 0) {
-      const stage = stageRef.current;
-      const shape = stage.getIntersection(pos);
-      const attrs = shape?.attrs;
-      if (!attrs.name) return;
-      if (attrs.name === 'node') {
-        const group = shape.getParent();
-        const nodeId = group.attrs.id;
-        deleteNode(nodeId);
-      } else if (attrs.name === 'Arrow') {
-        handleDeleteArrow(attrs.id);
-      } else if (attrs.name === 'Text') {
-        handleDeleteText(attrs.id);
-      }
     }
+    // else if (toggleButton === "delete" && e.evt.button === 0) {
+    //   const stage = stageRef.current;
+    //   stage.container().style.cursor = 'default';
+    // }
   }, [toggleButton, generateFolderNode, addNode, arrowMoving]);
+
+  // delete node Mode
+  useEffect(() => {
+    if (toggleButton === "delete") {
+      setIsDeletingNode(true);
+    } else {
+      setIsDeletingNode(false);
+    }
+  }, [toggleButton]);
 
   const handleDragEnd = (e) => {
     e.cancelBubble = true;
@@ -510,6 +515,7 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
           circleRadius={48}
           onFolderOpen={handleFolderDialogOpen}
           findNodeResult={findNodeResult}
+          isDeletingNode={isDeletingNode}
         />
         <ImageTextLayer
           texts={texts}
@@ -518,6 +524,8 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
           onUpdateText={updateText}
           onUpdateArrow={updateArrow}
           onDeleteText={handleDeleteText}
+          onDeleteArrow={handleDeleteArrow}
+          isDeletingNode={isDeletingNode}
         />
       </Stage>
       <Menu

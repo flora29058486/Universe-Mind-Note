@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Layer, Text, Group, Arrow } from 'react-konva';
 import { Html } from 'react-konva-utils';
 import TextSettingToggleButton from './TextSettingToggleButton';
@@ -23,11 +23,17 @@ import TextSettingToggleButton from './TextSettingToggleButton';
 //   <Group name="top" />
 // </Layer> */}
 
-const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateArrow, onDeleteText }) => {
+const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateArrow, onDeleteText, onDeleteArrow, isDeletingNode }) => {
   const [editingId, setEditingId] = useState(null);
-  const [isEditingText, setIsEditingText] = useState(false);
+  const [isEditingText, setIsEditingText] = useState(null);
   const [isToggleToolFocus, setIsToggleToolFocus] = useState(false);
-  const inputRef = useRef();
+  const deleteModeRef = useRef();
+
+  useEffect(() => {
+    if (deleteModeRef.current !== isDeletingNode) {
+      deleteModeRef.current = isDeletingNode;
+    }
+  }, [isDeletingNode]);
 
   useEffect(() => {
     if (currentTextId) {
@@ -35,11 +41,12 @@ const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateAr
     }
   }, [currentTextId]);
 
-  useEffect(() => {
-    if (editingId && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [editingId]);
+  // useEffect(() => {
+  //   console.log("editingId", editingId)
+  //   if (editingId) {
+  //     console.log("focus");
+  //   }
+  // }, [editingId]);
 
   const handleDeleteText = (isDel) => {
     if (isDel) {
@@ -57,12 +64,34 @@ const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateAr
     stage.container().style.cursor = 'default';
   };
 
+  const handleTextClick = (text, e) => {
+    if (e.evt.button !== 0) return;
+    if (deleteModeRef.current) {
+      onDeleteText(text.id);
+      const stage = e.target.getStage();
+      stage.container().style.cursor = 'default';
+    }
+  }
+
+  const handleArrowClick = (e, arrow) => {
+    if (e.evt.button !== 0) return;
+    if (deleteModeRef.current) {
+      onDeleteArrow(arrow.id);
+      const stage = e.target.getStage();
+      stage.container().style.cursor = 'default';
+    }
+  }
+
   const handleTextDbClick = (text, e) => {
     if (e.evt.button !== 0) return;
     const stage = e.target.getStage();
     // const pointerPosition = stage.getPointerPosition();
     setIsEditingText(true);
     setEditingId(text.id); 
+  };
+
+  const handleInputFocus = () => {
+    setIsEditingText(true);
   };
 
   const handleInputBlur = () => {
@@ -116,7 +145,7 @@ const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateAr
               e.cancelBubble = true;
               onUpdateText(text.id, { x: e.target.x(), y: e.target.y() });
             }}
-            // onClick={(e) => handleTextClick(text, e)}
+            onClick={(e) => handleTextClick(text, e)}
             onDblClick={(e) => handleTextDbClick(text, e)}
             onMouseEnter={(e) => handleMouseEnter(e)}
             onMouseLeave={(e) => handleMouseLeave(e)}
@@ -139,10 +168,11 @@ const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateAr
                   onDelText={handleDeleteText}
                 />
                 <input
-                  ref={inputRef}
+                  autoFocus
                   style={{ fontSize: text.fontSize || 20 }}
                   onChange={(e) => onUpdateText(text.id, { text: e.target.value })}
                   defaultValue={text.text}
+                  onFocus={handleInputFocus}
                   onBlur={handleInputBlur}
                 />
               </div>
@@ -165,6 +195,7 @@ const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateAr
               pointerWidth={10}
               draggable
               perfectDrawEnabled={false}
+              onClick={(e) => handleArrowClick(e, arrow)}
               onDragEnd={(e) => {
                 e.cancelBubble = true;
                 const newPosition = {x: e.target.position().x, y: e.target.position().y};

@@ -3,8 +3,8 @@ import { Circle, Layer, Text, Group, Rect } from 'react-konva';
 import { useNodes } from '../Context/NodeContext.js';
 import { set } from 'lodash-es';
 
-const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen, findNodeResult }) => {
-  const { nodes, setNodes, updateNodePosition, nodeIntoFolder } = useNodes();
+const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen, findNodeResult, isDeletingNode }) => {
+  const { nodes, setNodes, updateNodePosition, nodeIntoFolder, deleteNode } = useNodes();
   // nodeOnhover interaction
   const [hoverNodeId, setHoverNodeId] = useState(null);
   const [hoverRectId, setHoverRectId] = useState(null);
@@ -21,6 +21,13 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen, findNodeResult
   const [nodeMoving, setNodeMoving] = useState(null);
   const existingNodeLayerRef = useRef();
   const moveNodeTempLayerRef = useRef();
+  const deleteModeRef = useRef();
+
+  useEffect(() => {
+    if (deleteModeRef.current !== isDeletingNode) {
+      deleteModeRef.current = isDeletingNode;
+    }
+  }, [isDeletingNode]);
 
   useEffect(() => {
     // 設定繪製的所有node
@@ -238,7 +245,12 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen, findNodeResult
   };
 
   const handleClick = (e, node) => {
-    // e.cancelBubble = true;
+    if (e.evt.button !== 0) return;
+    if (deleteModeRef.current) {
+      deleteNode(node.nodeId);
+      const stage = e.target.getStage();
+      stage.container().style.cursor = 'default';
+    }
 
     // console.log(e.evt.button);
     // Open nodeDialog

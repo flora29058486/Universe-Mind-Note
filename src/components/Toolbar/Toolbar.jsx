@@ -132,7 +132,7 @@ function Toolbar({ onToolSelect, currentBg, onSearchResults }) {
           </List>
         </Drawer>
       </Grid>
-      <Grid item sx={{ height: '100vh', flexShrink: 1, flexGrow: 1 }}>
+      <Grid item sx={{ height: '100vh', maxWidth: 'calc(100% - 72px)', flexShrink: 1, flexGrow: 1 }}>
         {selectedButton === 'Explorer' && (
           <FileTreeView selectedButton={selectedButton} />
         )}
