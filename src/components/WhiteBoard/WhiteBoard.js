@@ -1,8 +1,8 @@
 // WhiteBoard.js
-import React, { useState, useEffect, useRef, useId, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Stage, Layer, Circle, Rect } from "react-konva";
 import { v4 as uuidv4 } from 'uuid';
-import { throttle } from 'lodash-es';
+import { set, throttle, debounce } from 'lodash-es';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 
@@ -32,7 +32,7 @@ function generateBackgroundLayer() {
 
 const INITIAL_BAKEGROUND_STATE = generateBackgroundLayer();
 
-export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRefChange, fileDropType, fileDrop, toggleButton, toolUsed, dropClientPosition, currentBg, nodeFind }) => {
+export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad, onStageRefChange, fileDropType, fileDrop, toggleButton, toolUsed, dropClientPosition, currentBg, nodeFind }) => {
   const prevFileDrop = useRef(fileDrop);
   const fileDropTypeRef = useRef(fileDropType);
   const [background, setBackground] = useState('');
@@ -55,7 +55,13 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
   const [stageScale, setStageScale] = useState(1);
   const stageRef = useRef(null);
   // 文字方塊
+  const [textLayerInfo, setTextLayerInfo] = useState([]);
   const [texts, setTexts] = useState([]);
+  // arrow
+  const [arrowLayerInfo, setArrowLayerInfo] = useState([]);
+  const [arrows, setArrows] = useState([]);
+  const [arrowMoving, setArrowMoving] = useState(null);
+
   const [editingTextId, setEditingTextId] = useState(null);
   // 尋找節點
   const [findNodeResult, setFindNodeResult] = useState(null);
@@ -66,26 +72,88 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
 
   // Stageinfo safe to userData
   useEffect(() => {
-    console.log('stageSave', stageSave)
+    // console.log('stageSave', stageSave)
     if (stageRef.current) {
       onStageRefChange(stageRef.current);
     }
   }, [stageSave]);
 
-  // 讀取關閉前文字與圖片圖層
+  // 讀取文字與圖片圖層
   useEffect(() => {
-    if (!textLaterLoad) return;
-    setTexts(textLaterLoad);
-  }, [textLaterLoad]);
+    if (!textLoad) return;
+    setTexts(textLoad);
+    setTextLayerInfo(textLoad);
+    // console.log('textLoad', textLoad);
+  }, [textLoad]);
+
+  useEffect(() => {
+    if (!arrowLoad) return;
+    setArrows(arrowLoad);
+    setArrowLayerInfo(arrowLoad);
+    // console.log('arrowLoad', arrowLoad);
+  }, [arrowLoad]);
+
+  const handleMouseMove = () => {
+    if (!arrowMoving) return;
+  
+    const stage = stageRef.current;
+    const pointerPosition = stage.getRelativePointerPosition();
+    const arrowPoint = arrows.find(arrow => arrow.id === arrowMoving)?.points;
+    const dx = Math.abs(pointerPosition.x - arrowPoint[2]);
+    const dy = Math.abs(pointerPosition.y - arrowPoint[3]);
+    const distanceThreshold = 2; // 可以根據需要調整這個閾值
+  
+    if (dx > distanceThreshold || dy > distanceThreshold) {
+      updateArrow(arrowMoving, {
+        points: [
+          arrowPoint[0],
+          arrowPoint[1],
+          pointerPosition.x,
+          pointerPosition.y
+        ]
+      });
+    }
+  };
 
   // 紀錄文字圖層
   useEffect(() => {
-    const canvasState = stageRef.current.toJSON();
-    const parse = JSON.parse(canvasState);
-    const textLayerGroups = parse.children[3].children;
-    const textLayer = textLayerGroups.map(group => { return group.children[0].attrs });
-    textLayerSave(textLayer);
-  }, [texts]);
+    // const canvasState = stageRef.current.toJSON();
+    const theTexts = stageRef.current.find('.Text');
+    // console.log('theTexts', theTexts)
+    const textsInfo = theTexts.map(group => {
+      const lesserInfo = group.children[0].attrs;
+      return {
+        draggable: lesserInfo.draggable,
+        fill: lesserInfo.fill,
+        fontSize: lesserInfo.fontSize,
+        id: lesserInfo.id,
+        text: lesserInfo.text,
+        x: lesserInfo.x,
+        y: lesserInfo.y,
+      }
+    });
+    textSave(textsInfo);
+  }, [textLayerInfo, texts]);
+
+  const debouncedSave = useCallback(debounce((arrowsInfo) => {
+    arrowSave(arrowsInfo);
+    // console.log('arrowSave', arrowsInfo);
+  }, 200), [arrowMoving]); // 300 毫秒延遲
+
+  useEffect(() => {
+    const theArrows = stageRef.current.find('.Arrow');
+    const arrowsInfo = theArrows.map(group => {
+      const lesserInfo = group.children[0].attrs;
+      return {
+        id: lesserInfo.id,
+        points: lesserInfo.points,
+        strokeWidth: lesserInfo.strokeWidth,
+        fill: lesserInfo.fill,
+        stroke: lesserInfo.stroke,
+      }
+    });
+    debouncedSave(arrowsInfo);
+  }, [arrows, arrowLayerInfo]);
 
   const generateNodes = (dropNodes, nodePosition) => {
     const fileCount = dropNodes.length;
@@ -225,7 +293,7 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
     setStageSize({ width: window.innerWidth, height: window.innerHeight });
 
     if (stageRef.current) {
-      console.log(stageRef.current)
+      // console.log(stageRef.current)
       stageRef.current.draw();
     }
   }, 200), []);
@@ -269,6 +337,14 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
     // console.log('updateText', id, newText)
     setTexts(prevTexts => prevTexts.map(text => text.id === id ? { ...text, ...newText } : text));
   };
+
+  const addArrow = (newArrow) => {
+    setArrows(prevArrows => [...prevArrows, newArrow]);
+  };
+
+  const updateArrow = (id, newArrow) => {
+    setArrows(prevArrows => prevArrows.map(arrow => arrow.id === id ? { ...arrow, ...newArrow } : arrow));
+  };
   
   const handleDragStart = (e) => {
     e.cancelBubble = true;
@@ -276,9 +352,11 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
   };
 
   const handleClick = useCallback((e) => {
+    if (arrowMoving && e.evt.button === 0) {
+      // console.log("stop moving")
+      setArrowMoving(null);
+    };
     e.cancelBubble = true;
-    // console.log(e.currentTarget.getPointerPosition());
-    // console.log(e.currentTarget.getRelativePointerPosition());
     const pos = e.currentTarget.getRelativePointerPosition();
 
     if (toggleButton === "create-folder" && e.evt.button === 0) {
@@ -299,7 +377,19 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
       toolUsed('');
       addText(newText); // 添加到文本数组状态
     }
-  }, [toggleButton, generateFolderNode, addNode]);
+    else if (toggleButton === "create-arrow" && e.evt.button === 0) {
+      const newArrow = {
+        id: uuidv4(),
+        points: [pos.x, pos.y, pos.x, pos.y],
+        strokeWidth: 3,
+        fill: 'black',
+        stroke: 'black',
+      };
+      setArrowMoving(newArrow.id);
+      toolUsed('');
+      addArrow(newArrow);
+    }
+  }, [toggleButton, generateFolderNode, addNode, arrowMoving]);
 
   const handleDragEnd = (e) => {
     e.cancelBubble = true;
@@ -307,12 +397,6 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
     
     // 獲取拖動結束後的位置
     const position = e.target.position();
-    const rel = e.target.getRelativePointerPosition();
-    // console.log(e.target);
-
-
-    // console.log("position", position);
-    // 更新位置狀態
     setPosition({ x: position.x, y: position.y });
   };
 
@@ -329,7 +413,7 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
     
     if (e.target.attrs.name === 'node') {
       contextMenuCurrentShape.current = e.target.getParent();
-      console.log(e.target);
+      // console.log(e.target);
       
       setContextMenu({
         mouseX: e.evt.clientX,
@@ -393,6 +477,7 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
         onDragEnd={handleDragEnd}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
+        onMouseMove={handleMouseMove}
       >
         <BackLayerRender
           backGround={backGroundImage}
@@ -410,8 +495,10 @@ export const WhiteBoard = ({ stageSave, textLayerSave, textLaterLoad, onStageRef
         />
         <ImageTextLayer
           texts={texts}
+          arrows={arrows}
           currentTextId={editingTextId}
           onUpdateText={updateText}
+          onUpdateArrow={updateArrow}
           onDeleteText={handleDeleteText}
         />
       </Stage>

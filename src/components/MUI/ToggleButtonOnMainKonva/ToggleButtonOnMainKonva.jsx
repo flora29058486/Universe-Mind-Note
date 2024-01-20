@@ -9,6 +9,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
 import PanToolAltIcon from '@mui/icons-material/PanToolAlt';
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 
 // const useStyles = makeStyles((theme) => ({
 //   root: {
@@ -71,21 +72,21 @@ const ToggleButtonOnMainKonva = ({ onToggleButtonSelect, toolUsed }) => {
               <CreateNewFolderIcon/> 
           </Tooltip>
         </ToggleButton>
+        <ToggleButton value="create-arrow" aria-label="create-arrow">
+          <Tooltip title="新增箭頭" arrow>
+            <ArrowRightAltIcon/>
+          </Tooltip>
+        </ToggleButton>
         <ToggleButton value="delete" aria-label="delete">
-          <Tooltip title="現在沒有功能喔sorry" arrow>
-              <DeleteIcon/>
+          <Tooltip title="刪除畫布元素" arrow>
+            <DeleteIcon/>
           </Tooltip>
         </ToggleButton>
-        <ToggleButton value="zoom-in" aria-label="zoom-in">
-          <Tooltip title="現在沒有功能喔sorry" arrow>
-            <ZoomInMapIcon/>
-          </Tooltip>
-        </ToggleButton>
-        <ToggleButton value="pan" aria-label="pan">
+        {/* <ToggleButton value="pan" aria-label="pan">
           <Tooltip title="現在沒有功能喔sorry" arrow>
             <PanToolAltIcon/>
           </Tooltip>
-        </ToggleButton>
+        </ToggleButton> */}
         {/* <ToggleButton value="zoom-out" aria-label="zoom-out">
           <ZoomInMapIcon style={{ transform: 'rotate(180deg)' }} className={classes.icon} />
         </ToggleButton> */}

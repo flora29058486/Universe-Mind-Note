@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layer, Text, Group } from 'react-konva';
+import { Layer, Text, Group, Arrow } from 'react-konva';
 import { Html } from 'react-konva-utils';
 import TextSettingToggleButton from './TextSettingToggleButton';
 
@@ -23,7 +23,7 @@ import TextSettingToggleButton from './TextSettingToggleButton';
 //   <Group name="top" />
 // </Layer> */}
 
-const ImageTextLayer = ({ texts, currentTextId, onUpdateText, onDeleteText }) => {
+const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateArrow, onDeleteText }) => {
   const [editingId, setEditingId] = useState(null);
   const [isEditingText, setIsEditingText] = useState(false);
   const [isToggleToolFocus, setIsToggleToolFocus] = useState(false);
@@ -37,7 +37,6 @@ const ImageTextLayer = ({ texts, currentTextId, onUpdateText, onDeleteText }) =>
 
   useEffect(() => {
     if (editingId && inputRef.current) {
-      // console.log(inputRef.current);
       inputRef.current.focus();
     }
   }, [editingId]);
@@ -46,6 +45,16 @@ const ImageTextLayer = ({ texts, currentTextId, onUpdateText, onDeleteText }) =>
     if (isDel) {
       onDeleteText(editingId);
     }
+  };
+
+  const handleMouseEnter = (e) => {
+    const stage = e.target.getStage()
+    stage.container().style.cursor = 'pointer';
+  };
+
+  const handleMouseLeave = (e) => {
+    const stage = e.target.getStage()
+    stage.container().style.cursor = 'default';
   };
 
   const handleTextDbClick = (text, e) => {
@@ -81,6 +90,10 @@ const ImageTextLayer = ({ texts, currentTextId, onUpdateText, onDeleteText }) =>
     onUpdateText(editingId, { [props]: newvalue });
   };
 
+  const handleArrowPropsChange = (id, newvalue) => {
+    onUpdateArrow(id, { ['points']: newvalue });
+  };
+
   const handleToggleToolFoucs = (isFocus) => {
     setIsToggleToolFocus(isFocus);
   };
@@ -88,7 +101,7 @@ const ImageTextLayer = ({ texts, currentTextId, onUpdateText, onDeleteText }) =>
   return (
     <Layer>
       {texts.map((text) => (
-        <Group key={text.id}>
+        <Group key={text.id} name='Text'>
           <Text
             id={text.id}
             x={text.x}
@@ -104,6 +117,8 @@ const ImageTextLayer = ({ texts, currentTextId, onUpdateText, onDeleteText }) =>
             }}
             // onClick={(e) => handleTextClick(text, e)}
             onDblClick={(e) => handleTextDbClick(text, e)}
+            onMouseEnter={(e) => handleMouseEnter(e)}
+            onMouseLeave={(e) => handleMouseLeave(e)}
           />
           {editingId === text.id && (
             <Html>
@@ -134,6 +149,40 @@ const ImageTextLayer = ({ texts, currentTextId, onUpdateText, onDeleteText }) =>
           )}
         </Group>
       ))}
+      {arrows.map((arrow) => {
+        return (
+          <Group key={arrow.id} name='Arrow'>
+            <Arrow
+              id={arrow.id}
+              points={[arrow.points[0], arrow.points[1], arrow.points[2], arrow.points[3]]}
+              strokeWidth={arrow.strokeWidth || 3}
+              fill={arrow.fill || 'black'} // 同上
+              stroke={arrow.stroke || 'black'} // 同上
+              hitStrokeWidth={15}
+              pointerLength={10}
+              pointerWidth={10}
+              draggable
+              perfectDrawEnabled={false}
+              onDragEnd={(e) => {
+                e.cancelBubble = true;
+                const newPosition = {x: e.target.position().x, y: e.target.position().y};
+                  // 更新 points，將原始點轉移到新位置
+                const newPoints = e.target.points().map((point, index) => {
+                  return index % 2 === 0 ? point + newPosition.x : point + newPosition.y;
+                });
+
+                // 設置新的 points
+                handleArrowPropsChange(arrow.id, newPoints);
+                e.target.position({ x: 0, y: 0 });
+                e.target.getLayer().batchDraw();
+              }}
+              onMouseEnter={(e) => handleMouseEnter(e, arrow)}
+              onMouseLeave={(e) => handleMouseLeave(e, arrow)}
+            />
+          </Group>
+        );
+      })
+      }
     </Layer>
   );
 };

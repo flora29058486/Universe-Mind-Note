@@ -14,10 +14,10 @@ if (require('electron-squirrel-startup')) {
 
 // require('dotenv').config();
 
-async function saveData(labels, nodes, stage, text) {
+async function saveData(labels, nodes, stage, text, arrow) {
   try {
     // 將數據轉換為 JSON 字符串
-    const dataToSave = JSON.stringify({ labels, nodes, stage, text }, null, 2); // 使用參數讓輸出更易於閱讀
+    const dataToSave = JSON.stringify({ labels, nodes, stage, text, arrow }, null, 2); // 使用參數讓輸出更易於閱讀
 
     // 異步地寫入數據到文件
     const userDataPath = (app || remote.app).getPath('userData');
@@ -282,9 +282,9 @@ if (!gotTheLock) {
 
 const createWindow = () => {
   // Save User Data
-  ipcMain.on('save-user-data', async (event, { labels, nodes, stage, text }) => {
+  ipcMain.on('save-user-data', async (event, { labels, nodes, stage, text, arrow }) => {
     // 這裡執行保存數據的邏輯
-    await saveData(labels, nodes, stage, text);
+    await saveData(labels, nodes, stage, text, arrow);
   });
   // load userData
   ipcMain.handle('user-data-loaded', handleLoadUserData);

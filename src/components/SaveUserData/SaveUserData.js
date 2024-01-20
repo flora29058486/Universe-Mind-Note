@@ -3,7 +3,7 @@ import { useLabels } from '../Context/LabelContext.js';
 import { useNodes } from '../Context/NodeContext.js';
 
 
-export const SaveUserData = ({ onStateChange, konvaStageJson, textLayerData }) => {
+export const SaveUserData = ({ onStateChange, konvaStageJson, textLayerData, arrowData }) => {
   // UserData Init and save
   const { labels } = useLabels();
   const { nodes } = useNodes();
@@ -12,6 +12,7 @@ export const SaveUserData = ({ onStateChange, konvaStageJson, textLayerData }) =
   const currentNodes = useRef(nodes);
   const currentStage = useRef(konvaStageJson);
   const currentTextLayerData = useRef(textLayerData);
+  const currentArrowData = useRef(arrowData);
 
   let counter = 0;
 
@@ -35,6 +36,11 @@ export const SaveUserData = ({ onStateChange, konvaStageJson, textLayerData }) =
     // console.log("textLayerData change", textLayerData)
   }, [textLayerData]);
 
+  // arrowData change
+  useEffect(() => {
+    currentArrowData.current = arrowData;
+    // console.log("arrowData change", arrowData)
+  }, [arrowData]);
 
   // 只在組件首次掛載時註冊事件監聽器
   useEffect(() => {
@@ -42,7 +48,7 @@ export const SaveUserData = ({ onStateChange, konvaStageJson, textLayerData }) =
       // 使用 currentLabels.current 和 currentNodes.current 獲取最新的值
       // onStateChange(true);
       // console.log("should not console")
-      window.electronAPI.saveUserData({ labels: currentLabels.current, nodes: currentNodes.current, stage: currentStage.current, text: currentTextLayerData.current });
+      window.electronAPI.saveUserData({ labels: currentLabels.current, nodes: currentNodes.current, stage: currentStage.current, text: currentTextLayerData.current, arrow: currentArrowData.current });
     };
 
     window.electronAPI.requestSaveData(handleSaveDataRequest);

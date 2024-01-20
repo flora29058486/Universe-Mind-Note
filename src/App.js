@@ -30,6 +30,9 @@ export default function App() {
   // textLayerData
   const [textLayerOnLoad, setTextLayerOnLoad] = useState(null);
   const [textLayerData, setTextLayerData] = useState(null);
+  // arrowData
+  const [arrowOnLoad, setArrowOnLoad] = useState(null);
+  const [arrowData, setArrowData] = useState(null);
   // nodeFinder
   const [nodeFind, setNodeFind] = useState(null);
 
@@ -51,11 +54,15 @@ export default function App() {
       if (preUserData.text === undefined) {
         setTextLayerOnLoad([]);
       };
+      if (preUserData.arrow === undefined) {
+        setArrowOnLoad([]);
+      };
       return;
     } else {
       setUserDataNode(preUserData.nodes);
       setUserDataLabel(preUserData.labels);
       setTextLayerOnLoad(preUserData.text);
+      setArrowOnLoad(preUserData.arrow);
     }
   };
 
@@ -85,6 +92,10 @@ export default function App() {
 
   const handleTextLayerSave = useCallback((textLayer) => {
     setTextLayerData(textLayer);
+  }, []);
+
+  const handleArrowSave = useCallback((arrow) => {
+    setArrowData(arrow);
   }, []);
 
   useEffect(() => {
@@ -146,7 +157,7 @@ export default function App() {
     userDataNode && userDataLabel && (
       <LabelsProvider initialLabels={userDataLabel}>
       <NodeProvider initialNodes={userDataNode}>
-        <SaveUserData onStateChange={handleStateChange} konvaStageJson={konvaStageJson} textLayerData={textLayerData} />
+        <SaveUserData onStateChange={handleStateChange} konvaStageJson={konvaStageJson} textLayerData={textLayerData} arrowData={arrowData} />
         <Grid container sx={{ overflow: 'hidden', position: 'relative', flexWrap: 'nowrap' }}>
           <ToggleButtonOnMainKonva onToggleButtonSelect={handleToggleButtonSelect} toolUsed={toolUsed}/>
           {/* 左邊的 Grid */}
@@ -192,8 +203,10 @@ export default function App() {
                 <div id="konva-container" onDrop={handleDropOutside} onDragOver={(e) => e.preventDefault()}>
                   <WhiteBoard
                     stageSave={stageSave}
-                    textLayerSave={handleTextLayerSave}
-                    textLaterLoad={textLayerOnLoad}
+                    textSave={handleTextLayerSave}
+                    textLoad={textLayerOnLoad}
+                    arrowSave={handleArrowSave}
+                    arrowLoad={arrowOnLoad}
                     onStageRefChange={handleStageRefChange}
                     fileDropType={fileDropType}
                     fileDrop={fileDrag}
@@ -218,8 +231,10 @@ export default function App() {
                 <div id="konva-container" onDrop={handleDropOutside} onDragOver={(e) => e.preventDefault()}>
                   <WhiteBoard
                     stageSave={stageSave}
-                    textLayerSave={handleTextLayerSave}
-                    textLaterLoad={textLayerOnLoad}
+                    textSave={handleTextLayerSave}
+                    textLoad={textLayerOnLoad}
+                    arrowSave={handleArrowSave}
+                    arrowLoad={arrowOnLoad}
                     onStageRefChange={handleStageRefChange}
                     fileDropType={fileDropType}
                     fileDrop={fileDrag}
