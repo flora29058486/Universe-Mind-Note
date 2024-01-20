@@ -30,7 +30,7 @@ export const NodeProvider = ({ children, initialNodes }) => {
     
     // 所有要刪除的標籤
     const labelsToDelete = new Set(nodeToDelete.attribute.map(attr => attr.labelId));
-    console.log(labelsToDelete);
+    // console.log(labelsToDelete);
 
     // 歷遍所有節點，過濾需要刪除的標籤
     nodes.forEach(node => {
@@ -45,7 +45,7 @@ export const NodeProvider = ({ children, initialNodes }) => {
 
     // 處理需要刪除的標籤
     labelsToDelete.forEach(labelId => {
-      console.log("Deleting label:", labelId);
+      // console.log("Deleting label:", labelId);
       removeLabel(labelId);
     });
 

@@ -82,7 +82,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen, findNodeResult
   // 搜尋節點
   useEffect(() => {
     if (!findNodeResult) return;
-    console.log(findNodeResult);
+    // console.log(findNodeResult);
     setFindedNodes(findNodeResult);
   }, [findNodeResult]);
 
@@ -238,7 +238,7 @@ const DrawExistingNode = ({ nodeInfo, circleRadius, onFolderOpen, findNodeResult
   };
 
   const handleClick = (e, node) => {
-    e.cancelBubble = true;
+    // e.cancelBubble = true;
 
     // console.log(e.evt.button);
     // Open nodeDialog

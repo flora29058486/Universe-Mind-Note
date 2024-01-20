@@ -101,9 +101,10 @@ const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateAr
   return (
     <Layer>
       {texts.map((text) => (
-        <Group key={text.id} name='Text'>
+        <Group key={text.id} name='TextGroup'>
           <Text
             id={text.id}
+            name='Text'
             x={text.x}
             y={text.y}
             text={editingId === text.id ? '' : text.text} // 当编辑时隐藏 Konva 文本
@@ -151,9 +152,10 @@ const ImageTextLayer = ({ texts, arrows, currentTextId, onUpdateText, onUpdateAr
       ))}
       {arrows.map((arrow) => {
         return (
-          <Group key={arrow.id} name='Arrow'>
+          <Group key={arrow.id} name='ArrowGroup'>
             <Arrow
               id={arrow.id}
+              name='Arrow'
               points={[arrow.points[0], arrow.points[1], arrow.points[2], arrow.points[3]]}
               strokeWidth={arrow.strokeWidth || 3}
               fill={arrow.fill || 'black'} // 同上

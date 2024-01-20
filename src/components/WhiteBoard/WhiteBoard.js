@@ -118,7 +118,7 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
   // 紀錄文字圖層
   useEffect(() => {
     // const canvasState = stageRef.current.toJSON();
-    const theTexts = stageRef.current.find('.Text');
+    const theTexts = stageRef.current.find('.TextGroup');
     // console.log('theTexts', theTexts)
     const textsInfo = theTexts.map(group => {
       const lesserInfo = group.children[0].attrs;
@@ -141,7 +141,7 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
   }, 200), [arrowMoving]); // 300 毫秒延遲
 
   useEffect(() => {
-    const theArrows = stageRef.current.find('.Arrow');
+    const theArrows = stageRef.current.find('.ArrowGroup');
     const arrowsInfo = theArrows.map(group => {
       const lesserInfo = group.children[0].attrs;
       return {
@@ -388,6 +388,20 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
       setArrowMoving(newArrow.id);
       toolUsed('');
       addArrow(newArrow);
+    } else if (toggleButton === "delete" && e.evt.button === 0) {
+      const stage = stageRef.current;
+      const shape = stage.getIntersection(pos);
+      const attrs = shape?.attrs;
+      if (!attrs.name) return;
+      if (attrs.name === 'node') {
+        const group = shape.getParent();
+        const nodeId = group.attrs.id;
+        deleteNode(nodeId);
+      } else if (attrs.name === 'Arrow') {
+        handleDeleteArrow(attrs.id);
+      } else if (attrs.name === 'Text') {
+        handleDeleteText(attrs.id);
+      }
     }
   }, [toggleButton, generateFolderNode, addNode, arrowMoving]);
 
@@ -463,6 +477,10 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
 
   const handleDeleteText = useCallback((textId) => {
     setTexts(prevTexts => prevTexts.filter(text => text.id !== textId));
+  }, []);
+
+  const handleDeleteArrow = useCallback((arrowId) => {
+    setArrows(prevArrows => prevArrows.filter(arrow => arrow.id !== arrowId));
   }, []);
 
   return (

@@ -140,7 +140,7 @@ function LabelManager({ labels, onMergeLabels, onUpdateLabel, findedNodes }) {
   }, [searchTerm, labels]);
 
   const handleToggle = (labelId) => {
-    console.log(labelId);
+    // console.log(labelId);
     const currentIndex = selectedLabels.indexOf(labelId);
     const newChecked = [...selectedLabels];
 
