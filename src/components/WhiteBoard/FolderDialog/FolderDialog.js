@@ -52,6 +52,8 @@ function FolderDialog({ folderDialogOpen, onFolderDialogClose, folderNode }) {
   const processNodeImg = async (node) => {
     if (node.nodeType === 'folder') {
       return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA1klEQVR4nO2WXwrCMAzGK4jgDRLxBB7B3ULv5PTBMwlrFA8geAD/HGKJRIqbiJuCsG4P5oM+9eH7NUnbzzmTqZAeJgP2sGLCqxDq62KPN/ZwZA8zF0tMsHw3roAQSr4dTeMAeLgEkzoD3bg+e1wXIHtV12scQIpTftrX3XjIHk6PSsA8GoBEXKHKodVh3joBkOcsQfpzC5pQnmFSVqITgK8+YgBkLUAbQrVrKPYQkT3F2N1nxGUkyzBp4Ts+VwEI0hYDyaI+lhOkZSUiRbJzMK+NZKa/1R38hE+Lh2UeTwAAAABJRU5ErkJggg=="; // Folder icon base64
+    } else if (node.nodeType === 'notion') {
+      return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAADeUlEQVR4nO3Ze+ieYxgH8M9+0bA5rAlRM3OYhAlppCGHRltp1GpjrUgNm2RhoZwV4h+UOTVbaiORkantj22smeSQOUTNKRQZI+e9uuv61dPb+zzv733f53l7n/p96/7vvu/r+t7PfX+v67kuRjGKgcQYHIipOB2zsADX4248huewBo/g/CqdGYdJOAnnYi6uxq14GM9iLbbgU/yIRhdjLQ4tw+EJeAJf4o8unWk1fsfXeA8b8Hx8ga3YHXMS+Ut6JfBCG0f+xvf4CJvwMp7Gg1iGq8KJs3EiDsPebWxOw7sZG89g324J/JrZKJ3UTJyKydhPdRiLhzJf4wuc0c1G2dP+ATP0FxeG3WT/X9yFPTvZoNWVWay/OATbMj68jaNHujjv7q/A+C4ULCnLcSGnM0PF0ju5CffiUazCK/GmPggB+avJ/k5c1AuBNHbgvjB+R8hoenAvYj3eibub1OSfEhWskVGpnggMwmiLMo0lRfsmJDcFutexGo/jftwS7ytF6YtxDk7BFEyMxzunbALvZzQ/ReTLMBtnRbQ+IoLhkHKwR9kESgn3HaJRJoEqMD4idlKr6Ti8wKdKCIyNzHN6SN18XIvbCvQ7yernEayabSzuJ4Fj8VPB/M057yGl1tsjyRueuw6XxoH0jcC8OMnfCtYsKbB3Q2be0hH4VDqBYSwoWJNO+cg6E2hEZjumzgQauLIuBHZgV4u1O0MuB57AFlyXs/7VuhAYwls5e8yrA4GEE+KHqFVafHAdCIifllb7pKy0FgRSVP04Z685dSAgUu3hakN2fBeVuoEnkPBkzn676kJgf3zbZu+lg0xAVCQqJ/BnhQRE+aRSAlsrJjCpqXzZKJvA7BIIpP+DMwuKukuqJJDwUgcE9sE1cerNc1MUPrnFmqGoxjWaxhVKIjAxMsqREFgUWeZX+BBv4jU8FY82D6nmc3M0SG7H8QVzOyaQcFrOg+43hnqxv2gACBzTq/3mu9qu29Lp6U6Iat606EXMirJMOrw78VnGdqpYd4xxcbeHN1kWhai9cBCOinrmeZGcLYyfmVQTegDLoxe2Lh769qiX5klp0Uh+dIWpXRosc/wy0v5AHlLj7r+Snfo51C4VjDdGlF4ZveN7cGM0Qy7AAUrA3LgCu6MFm7qVn0T0fiOuyvJM6TyVFy+P4Dgj7vnkuPejGIUBwP9w+kiX3uvrjAAAAABJRU5ErkJggg==";
     } else {
       const icon = await window.electronAPI.loadIcon(node.filepath);
       return icon; // 確保這返回的是一個字符串 URL
@@ -70,12 +72,14 @@ function FolderDialog({ folderDialogOpen, onFolderDialogClose, folderNode }) {
       } catch (error) {
         console.error('Error opening file:', error);
       }
+    } else if (node.nodeType === 'notion') {
+      window.electronAPI.openUrl(node.filepath);
     } else {
       console.log(node.nodeType);
       return;
     };
   };
-
+  
   return (
     <Dialog open={folderDialogOpen} onWheel={e => e.stopPropagation()} onClose={onFolderDialogClose} fullWidth maxWidth="md" PaperProps={{ style: { overflowY: 'auto', maxHeight: '60vh', padding: '10px', minHeight: '680px' } }} >
       <ToggleButtonGroup

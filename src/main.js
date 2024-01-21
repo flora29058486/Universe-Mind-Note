@@ -186,15 +186,6 @@ const handleLoadFileIcon = async (_, filePath) => {
 
 let mainWindow;
 
-// 防止開啟第二個app視窗
-if (process.defaultApp) {
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('electron-umn', process.execPath, [path.resolve(process.argv[1])])
-  }
-} else {
-    app.setAsDefaultProtocolClient('electron-umn')
-}
-
 const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
@@ -332,7 +323,7 @@ const createWindow = () => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   // 窗口要关闭的时候触发
   mainWindow.on('close', (e) => {
@@ -354,6 +345,16 @@ const createWindow = () => {
 // Some APIs can only be used after this event occurs.
 app.on('ready', createWindow);
 
+app.whenReady().then(() => {
+  // 防止开启第二个app窗口
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient('electron-umn', process.execPath, [path.resolve(process.argv[1])]);
+    }
+  } else {
+    app.setAsDefaultProtocolClient('electron-umn');
+  }
+});
 
 // 监听来自渲染进程的获取文件夹内容请求
 // ipcMain.on('dialog:openFolder', handleOpenFolder);

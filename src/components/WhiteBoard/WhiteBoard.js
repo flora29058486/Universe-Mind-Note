@@ -67,7 +67,8 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
   const [findNodeResult, setFindNodeResult] = useState(null);
   // 刪除節點
   const [isDeletingNode, setIsDeletingNode] = useState(false);
-
+  // 計算拖曳
+  const [leftSidePixel, setLeftSidePixel] = useState(350);
   // context
   const { labels, setLabels } = useLabels();
   const { nodes, setNodes, addNode, deleteNode } = useNodes();
@@ -166,7 +167,7 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
     const NodesGenerate = dropNodes.map((fileInfo, counter) => {
       const nodeId = fileInfo.nodeId;
       const fileName = fileInfo.fileName;
-      const startx = nodePosition.x - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate)) - screenLeftSidePixel;
+      const startx = nodePosition.x - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate)) - leftSidePixel/stageScale;
       const starty = nodePosition.y - ((squareSize - 1) * (circleRadius + 0.5 * paddingNodeCreate));
 
       return {
@@ -217,7 +218,7 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
       });
     }
 
-    let nodePosition = { x: dropClientPosition.x - position.x, y: dropClientPosition.y - position.y };
+    let nodePosition = { x: (dropClientPosition.x - position.x)/stageScale, y: (dropClientPosition.y - position.y)/stageScale };
 
     const NodesGenerate = generateNodes(updatedNodeInit, nodePosition);
     addNode(NodesGenerate);
@@ -293,12 +294,13 @@ export const WhiteBoard = ({ stageSave, textSave, textLoad, arrowSave, arrowLoad
   // 使用 useCallback 创建一个稳定的 handleResize 函数
   const handleResize = useCallback(throttle(() => {
     setStageSize({ width: window.innerWidth, height: window.innerHeight });
+    setLeftSidePixel((window.innerWidth)*0.25);
 
     if (stageRef.current) {
       // console.log(stageRef.current)
       stageRef.current.draw();
     }
-  }, 200), []);
+  }, 200), [window.innerWidth, window.innerHeight]);
 
   // wheel zoom event listener
   useEffect(() => {
