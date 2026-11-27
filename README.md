@@ -1,0 +1,1 @@
+Demo video: https://youtu.be/3-hiZKTK5Cs?si=Rt83yd6apFvZlB-r (narration in Mandarin Chinese; the screen recording shows the main features: placing files on the canvas, linking them, and syncing with Notion.)
